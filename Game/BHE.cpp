@@ -26,6 +26,14 @@ sf::FloatRect Bullet::getBounds() const {
     return shape.getGlobalBounds();
 }
 
+bool Bullet::getLand() {
+    return landed;
+}
+
+void Bullet::setLand() {
+    landed = true;
+}
+
 void BulletHellEngine::spawnBullet(const sf::Vector2f& pos, const sf::Vector2f& vel) {
     bullets.push_back(std::make_unique<Bullet>(pos, vel));
 }

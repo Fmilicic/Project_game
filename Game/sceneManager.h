@@ -28,6 +28,10 @@ private:
     sf::CircleShape player;
     sf::Vector2f velocity;
     float speed = 200.f;
+    float endTimer = 0.0f;
+    float endDuration = 4.0f;
+    bool countdown = false;
+    bool sceneOver = false;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 

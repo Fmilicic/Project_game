@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
-
+// handle player via frtiend classes perhaps?
 // mapScene
 void MapScene::handleEvent(const sf::Event& event) {
     // map event handling yon
@@ -64,14 +64,22 @@ void BulletHellScene::update(float dt, const sf::RenderWindow& window) {
     pos.y = std::clamp(pos.y, 0.f, 600.f);
     player.setPosition(pos);
     sf::FloatRect playerBounds = player.getGlobalBounds();
-    for (const auto& bullet : engine.getBullets()) {
-        if (player.getGlobalBounds().findIntersection(bullet->getBounds())) {
-            std::cout << "Hit!" << std::endl;
+    for (const auto& bullet : engine.getBullets()) { // the issue was that we stop entering this loop and that I'm a retard
+        if (player.getGlobalBounds().findIntersection(bullet->getBounds()) && bullet->getLand() == false) {
+            std::cout << "Hit!" << std::endl; //debug line, this
+            bullet->setLand();
+            bullet->~Bullet();
             break;
             // replace w/
             // player->takeDamage(bullet->getDamage());
             // bullet should also be removed on hit
         }
+        
+        
+    }
+    if (engine.getBullets().empty() && countdown == false) {
+        std::cout << "all bullets deleted. TND incoming" << std::endl;
+        // logic for qutting scene or signaling that we must
     }
 }
 

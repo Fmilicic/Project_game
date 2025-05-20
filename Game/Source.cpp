@@ -45,35 +45,36 @@ assumption 10: for win condition, let's start of with: collect key (either as ma
 */
 
 #include <SFML/Graphics.hpp>
-#include "SceneManager.h"  // Include your scene system
+#include "SceneManager.h" 
 #include <iostream>
 #include "BHE.h"
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 800, 600 }), "Bullet Hell Demo", sf::Style::Close); // Create a window
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 800, 600 }), "Bullet Hell Demo", sf::Style::Close);
 
-    window.setFramerateLimit(60); // Cap the framerate for consistency
-    SceneManager manager; // Create a SceneManager instance
-    manager.switchTo(SceneManager::State::BulletHell); // DEBUG: Start directly in bullet hell for now
+    window.setFramerateLimit(60); // max 60fps, AAA status now.
+    SceneManager manager; 
+    manager.switchTo(SceneManager::State::BulletHell); // DEBUG: Start bullet hell for now
 
-    sf::Clock clock; // Timer to measure delta time
+    sf::Clock clock;
 
     while (window.isOpen()) {
         //sf::Event& event;
         while (auto event = window.pollEvent()) {
-            if (event->is<sf::Event::Closed>())  // If the window is closed
+            if (event->is<sf::Event::Closed>())  
                 window.close();
             else {
                 manager.handleEvent(*event);
             }
         }
 
-        float dt = clock.restart().asSeconds(); // Calculate delta time
+        float dt = clock.restart().asSeconds(); 
 
-        manager.update(dt, window);  // Update current scene
-        window.clear();              // Clear the screen
-        window.draw(manager);       // Draw current scene
-        window.display();           // Present to screen
+        manager.update(dt, window); 
+        window.clear();            
+        window.draw(manager);       
+        window.display();          
+
     }
 
     return 0;
