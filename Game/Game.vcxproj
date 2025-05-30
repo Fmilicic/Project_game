@@ -132,14 +132,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BHE.cpp" />
+    <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Entity.h" />
+    <ClCompile Include="Map.cpp" />
+    <ClCompile Include="MapObject.cpp" />
     <ClCompile Include="sceneManager.cpp" />
     <ClCompile Include="sceneManager.h" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Tile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base.h" />
     <ClInclude Include="BHE.h" />
+    <ClInclude Include="Map.h" />
+    <ClInclude Include="MapObject.h" />
     <ClInclude Include="Tile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

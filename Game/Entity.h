@@ -1,42 +1,53 @@
-#pragma once
+#ifndef ENTITY_H
+#define ENTITY_H
+
 #include <SFML/Graphics.hpp>
-class Entity{ ///virtual class entity - we'll derive all further entity classes from it
+
+// --- Abstract Base Class ---
+class Entity : public sf::Drawable {
+public:
+    Entity();
+    virtual ~Entity() = default;
+    virtual void update(float dt) = 0;
+    virtual void takeDamage(int damage);
+    virtual void reset();
+    bool isDead() const;
+    int getHp() const;
+    int getAtk() const;
+    int getDef() const;
+    int getShields() const;
+    void setPosition(const sf::Vector2f& pos);
+    sf::Vector2f getPosition() const;
+    sf::CircleShape getBounds() const;
 protected:
-	virtual void update() = 0;
-	virtual ~Entity() = default;
+    int maxHp = 100;
+    int hp = 100;
+    int atk = 10;
+    int def = 5;
+    int shields = 0;
+    sf::CircleShape shape;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
-class Object: public Entity { // abstract class for map objects: we'll derive chest and key from it.
-
-};
-
-class Character : public Entity { //abstract class for entites that can move and interact
-protected:
-	int atk;
-	int hp;
-	int shield;
+// --- Player Class ---
+class Player : public Entity {
 public:
-	virtual void update_state();
-	virtual void takeDamage(int dmg);
-	virtual void shieldsUp(int shield);
+    Player();
+    void update(float dt) override;
+    void setStats(int hp, int atk, int def, int shields);
 };
 
-class Player : public Character { // class for player character
+// --- Enemy Class ---
+class Enemy : public Entity {
+public:
+    enum class Type { Basic, Boss, Ghost };
+    Enemy(Type type = Type::Basic);
+    void update(float dt) override;
+    void setType(Type type);
+    Type getType() const;
 private:
-
-public:
-	void update_state();
-	void takeDamage(int dmg);
-	void shieldsUp(int shield);
-
-
+    Type type;
+    void configureStats();
 };
 
-class Enemy : public Character {
-private:
-	// store attack patterns here?
-public:
-	void update_state();
-	void takeDamage(int dmg);
-	void shieldsUp(int shield);
-};
+#endif // ENTITY_H

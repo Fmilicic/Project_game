@@ -1,8 +1,16 @@
-#pragma once
+#ifndef TILE_H
+#define TILE_H
+
 #include <SFML/Graphics.hpp>
-#include "Entity.h"
 
-class Tile {
+struct Tile {
+    sf::RectangleShape shape;
+    bool passable;
+    bool isStairs;
+    int x, y;
 
-	*Entity occupant = nullptr;
+    Tile(int x, int y, float size, bool passable = true, bool stairs = false);
+    sf::FloatRect getBounds() const;
 };
+
+#endif // TILE_H

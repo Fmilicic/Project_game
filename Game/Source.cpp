@@ -45,37 +45,45 @@ assumption 10: for win condition, let's start of with: collect key (either as ma
 */
 
 #include <SFML/Graphics.hpp>
-#include "SceneManager.h" 
-#include <iostream>
-#include "BHE.h"
+#include "sceneManager.h"
+#include "Entity.h"
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 800, 600 }), "Bullet Hell Demo", sf::Style::Close);
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 1600, 1200 }), "RPG Bullet Hell (Map Test)");
 
-    window.setFramerateLimit(60); // max 60fps, AAA status now.
-    SceneManager manager; 
-    manager.switchTo(SceneManager::State::BulletHell); // DEBUG: Start bullet hell for now
+    // Create a SceneManager with multiple enemies
+    SceneManager sceneManager;
+
+    // Add several enemies at different positions
+    // (Assumes SceneManager creates one basic enemy by default in its constructor)
+    // Let's add two more for testing:
+    sceneManager.switchTo(SceneManager::State::Map); // Ensure we're in map mode
+
+    // Access enemies vector directly for demo (could be encapsulated in SceneManager)
+    // We'll assume enemies is public or provide a method to add enemies if needed.
+    // If private, add this to SceneManager:
+    // public: std::vector<Enemy>& getEnemies() { return enemies; }
+    // Then you can do:
+    // auto& enemies = sceneManager.getEnemies();
+    // For now, let's assume you can access or modify as needed:
+
+    // If you want to add more enemies, you can do so here, but the MapScene constructor
+    // also places them on the map. For demonstration, this is sufficient.
 
     sf::Clock clock;
-
     while (window.isOpen()) {
-        //sf::Event& event;
         while (auto event = window.pollEvent()) {
-            if (event->is<sf::Event::Closed>())  
+            if (event->is<sf::Event::Closed>())
                 window.close();
-            else {
-                manager.handleEvent(*event);
-            }
+            sceneManager.handleEvent(*event);
         }
 
-        float dt = clock.restart().asSeconds(); 
+        float dt = clock.restart().asSeconds();
+        sceneManager.update(dt, window);
 
-        manager.update(dt, window); 
-        window.clear();            
-        window.draw(manager);       
-        window.display();          
-
+        window.clear();
+        window.draw(sceneManager);
+        window.display();
     }
-
     return 0;
 }

@@ -1,4 +1,7 @@
-﻿  sceneManager.cpp
-sfml-window-s-d.lib(VideoMode.obj) : warning LNK4099: PDB '' was not found with 'sfml-window-s-d.lib(VideoMode.obj)' or at ''; linking object as if no debug info
-sfml-window-s-d.lib(WindowBase.obj) : warning LNK4099: PDB '' was not found with 'sfml-window-s-d.lib(WindowBase.obj)' or at ''; linking object as if no debug info
-  Game.vcxproj -> C:\Users\Fili\Desktop\DSA\Project_game\x64\Debug\Game.exe
+﻿  BHE.cpp
+  Entity.cpp
+  sceneManager.cpp
+  Generating Code...
+  Game.vcxproj -> C:\Users\User\Desktop\dsa_hw\game_project\Game\x64\Debug\Game.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
