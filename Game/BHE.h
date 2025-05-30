@@ -29,7 +29,9 @@ public:
     BulletHellEngine();
 
     void start(const sf::Vector2f& playerCenter, float playerRadius, Enemy* enemyRef);
-    void update(float dt, const sf::Vector2u& windowSize, const sf::Vector2f& playerCenter, float playerRadius, int& playerHp, int playerDef, int& playerShields);
+    void update(float dt, const sf::Vector2u& windowSize,
+        const sf::Vector2f& playerCenter, float playerRadius,
+        Player& player, int playerDef);
     bool isBattleOver() const;
 
     const std::vector<std::unique_ptr<Bullet>>& getBullets() const { return bullets; }

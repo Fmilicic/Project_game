@@ -47,40 +47,32 @@ assumption 10: for win condition, let's start of with: collect key (either as ma
 #include <SFML/Graphics.hpp>
 #include "sceneManager.h"
 #include "Entity.h"
-
 int main() {
-    sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 1600, 1200 }), "RPG Bullet Hell (Map Test)");
+    sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 800, 600 }), "RPG Bullet Hell", sf::Style::Default);
+    sf::View view(sf::FloatRect(sf::Vector2f{ 0, 0 }, sf::Vector2f{ 800, 600 })); // Logical game area
 
-    // Create a SceneManager with multiple enemies
     SceneManager sceneManager;
-
-    // Add several enemies at different positions
-    // (Assumes SceneManager creates one basic enemy by default in its constructor)
-    // Let's add two more for testing:
-    sceneManager.switchTo(SceneManager::State::Map); // Ensure we're in map mode
-
-    // Access enemies vector directly for demo (could be encapsulated in SceneManager)
-    // We'll assume enemies is public or provide a method to add enemies if needed.
-    // If private, add this to SceneManager:
-    // public: std::vector<Enemy>& getEnemies() { return enemies; }
-    // Then you can do:
-    // auto& enemies = sceneManager.getEnemies();
-    // For now, let's assume you can access or modify as needed:
-
-    // If you want to add more enemies, you can do so here, but the MapScene constructor
-    // also places them on the map. For demonstration, this is sufficient.
 
     sf::Clock clock;
     while (window.isOpen()) {
         while (auto event = window.pollEvent()) {
             if (event->is<sf::Event::Closed>())
                 window.close();
+
+            // Handle window resizing
+            if (const auto* resized = event->getIf<sf::Event::Resized>()) {
+                // Update the view to match the new window size and show more/less of the world
+                sf::FloatRect visibleArea({ 0.f, 0.f }, sf::Vector2f(resized->size));
+                window.setView(sf::View(visibleArea));
+            }
+
             sceneManager.handleEvent(*event);
         }
 
         float dt = clock.restart().asSeconds();
         sceneManager.update(dt, window);
 
+        window.setView(view); // Always set the view before drawing
         window.clear();
         window.draw(sceneManager);
         window.display();

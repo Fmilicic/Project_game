@@ -1,7 +1,4 @@
-﻿  BHE.cpp
-  Entity.cpp
-  sceneManager.cpp
-  Generating Code...
+﻿  Source.cpp
   Game.vcxproj -> C:\Users\User\Desktop\dsa_hw\game_project\Game\x64\Debug\Game.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.

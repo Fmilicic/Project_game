@@ -124,20 +124,18 @@ void BulletHellScene::update(float dt, const sf::RenderWindow& window) {
     engine.update(
         dt, window.getSize(),
         playerShape.getPosition(), playerShape.getRadius(),
-        playerHpCache, player.getDef(), playerShieldsCache
+        player, // pass the actual player object
+        player.getDef()
     );
 
     // Sync back to player entity after battle
-    if (playerHpCache <= 0) {
+    if (player.isDead()) {
         sceneOver = true;
-        player.takeDamage(player.getHp() - playerHpCache); // Sync HP if needed
     }
     if (engine.isBattleOver()) {
-        // Only return to map if alive
-        if (playerHpCache > 0) // the problem might be here
-            player.takeDamage(player.getHp() - playerHpCache);
         sceneOver = true;
     }
+
 
 }
 
@@ -188,16 +186,17 @@ void SceneManager::update(float dt, sf::RenderWindow& window) {
     if (currentState == State::BulletHell) {
         auto* battleScene = dynamic_cast<BulletHellScene*>(currentScene.get());
         if (battleScene && battleScene->isOver()) {
-            if (player.getHp() <= 0) // I'd argue that the issue is HERE somewhere. we probably reset before this fires, and so progress back to the start as opposed to the gameOver
+            if (player.isDead())
                 switchTo(State::GameOver);
             else
                 switchTo(State::Map);
         }
     }
+
     if (currentState == State::GameOver) { // never entered
         auto* goScene = dynamic_cast<GameOverScene*>(currentScene.get());
-        Sleep(5);
-        std::cerr << "entered game over state\n";
+        //Sleep(5);
+        //std::cerr << "entered game over state\n";
 
         if (goScene && goScene->isRespawnRequested()) {
             player.reset();
@@ -226,7 +225,7 @@ void GameOverScene::handleEvent(const sf::Event& event) { // this also perhaps a
     if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
         if (key->scancode == sf::Keyboard::Scan::Enter || key->scancode == sf::Keyboard::Scan::Space) {
             respawnRequested = true;
-            std::cerr << "respaw has been requested\n";
+            //std::cerr << "respaw has been requested\n";
         }
     }
 }
@@ -242,7 +241,7 @@ void GameOverScene::draw(sf::RenderTarget& target, sf::RenderStates states) cons
     text.setFillColor(sf::Color::Red);
     text.setStyle(sf::Text::Bold);
     text.setPosition(sf::Vector2f{ 120, 220 });
-    std::cerr << "game over screen has passed" << std::endl;
+    //std::cerr << "game over screen has passed" << std::endl;
     target.draw(text, states);
 }
 

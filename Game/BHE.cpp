@@ -54,9 +54,8 @@ void BulletHellEngine::update(
     const sf::Vector2u& windowSize,
     const sf::Vector2f& playerCenter,
     float playerRadius,
-    int& playerHp,
-    int playerDef,
-    int& playerShields
+    Player& player,
+    int playerDef
 ) {
     if (!enemy) return;
 
@@ -76,21 +75,9 @@ void BulletHellEngine::update(
         std::remove_if(bullets.begin(), bullets.end(),
             [&](const std::unique_ptr<Bullet>& b) {
                 if (b->intersectsCircle(playerCenter, playerRadius)) {
-                    std::cout << "Hit!" << std::endl;
-                    // Damage logic here (mimic Entity::takeDamage)
                     int damage = enemy->getAtk();
-                    if (playerShields > 0) {
-                        playerShields--;
-                        std::cout << "Shield blocked the hit!\n";
-                    }
-                    else {
-                        int finalDmg = std::max(1, damage - playerDef);
-                        playerHp -= finalDmg;
-                        if (playerHp < 0) playerHp = 0;
-                        std::cout << "Took " << finalDmg << " damage, hp is now " << playerHp << "\n";
-                        
-                    }
-                    return true; // Remove on hit
+                    player.takeDamage(damage); // directly mutates shield and HP
+                    return true;
                 }
                 return b->isOffscreen(windowSize);
             }),
