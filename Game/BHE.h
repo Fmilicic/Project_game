@@ -1,44 +1,30 @@
-#ifndef BULLETHELLENGINE_H
-#define BULLETHELLENGINE_H
-
+#pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
+#include "Entity.h"
 
-class Player;
-class Enemy;
-
-// --- Bullet: always a circle ---
 class Bullet {
 public:
     Bullet(const sf::Vector2f& position, const sf::Vector2f& velocity, float radius);
-
     void update(float dt);
     void draw(sf::RenderTarget& target) const;
-
     bool isOffscreen(const sf::Vector2u& windowSize) const;
     bool intersectsCircle(const sf::Vector2f& center, float radius) const;
-
+private:
     sf::CircleShape shape;
-    sf::Vector2f velocity;
+    sf::Vector2f   velocity;
 };
 
-// --- Bullet Hell Engine ---
 class BulletHellEngine : public sf::Drawable {
 public:
     BulletHellEngine();
-
-    void start(const sf::Vector2f& playerCenter, float playerRadius, Enemy* enemyRef);
-    void update(float dt, const sf::Vector2u& windowSize,
-        const sf::Vector2f& playerCenter, float playerRadius,
-        Player& player, int playerDef);
+    void start(Player& playerRef, Enemy& enemyRef);
+    void update(float dt, const sf::Vector2u& windowSize, Player& playerRef);
     bool isBattleOver() const;
-
-    const std::vector<std::unique_ptr<Bullet>>& getBullets() const { return bullets; }
-
 private:
     void spawnBullet();
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+    void draw(sf::RenderTarget& t, sf::RenderStates s) const override;
 
     std::vector<std::unique_ptr<Bullet>> bullets;
     Enemy* enemy = nullptr;
@@ -48,4 +34,4 @@ private:
     const float clearThreshold = 4.f;
 };
 
-#endif // BULLETHELLENGINE_H
+

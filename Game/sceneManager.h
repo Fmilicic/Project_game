@@ -1,15 +1,13 @@
-#ifndef SCENEMANAGER_H
-#define SCENEMANAGER_H
-
+#pragma once
 #include <SFML/Graphics.hpp>
 #include <memory>
 #include <vector>
+#include <optional>
 #include "Entity.h"
 #include "Map.h"
 #include "MapObject.h"
 #include "BHE.h"
 
-// --- Abstract Scene Interface ---
 class GameScene : public sf::Drawable {
 public:
     virtual ~GameScene() = default;
@@ -17,11 +15,9 @@ public:
     virtual void update(float dt, const sf::RenderWindow& window) = 0;
 };
 
-// --- MapScene ---
 class MapScene : public GameScene {
 public:
     MapScene(Player& player, std::vector<Enemy>& enemies);
-
     void handleEvent(const sf::Event& event) override;
     void update(float dt, const sf::RenderWindow& window) override;
     bool reachedStairs() const { return atStairs; }
@@ -39,51 +35,76 @@ private:
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
-// --- BulletHellScene ---
-class BulletHellScene : public GameScene {
+// ---------------- BattleScene ----------------
+class BattleScene : public GameScene {
 public:
-    BulletHellScene(Player& player, Enemy& enemy);
+    enum class State { PlayerMenu, SkillsMenu, EnemyAttack, BattleEnded };
+    BattleScene(Player& player, Enemy& enemy);
 
     void handleEvent(const sf::Event& event) override;
     void update(float dt, const sf::RenderWindow& window) override;
     bool isOver() const;
 
 private:
-    BulletHellEngine engine;
     Player& player;
     Enemy& enemy;
-    sf::CircleShape playerShape;
-    sf::Vector2f velocity;
-    float speed = 200.f;
-    bool sceneOver = false;
-    int playerHpCache;
-    int playerShieldsCache;
+    State   currentState = State::PlayerMenu;
+
+    // UI
+    sf::Font              font;
+    std::vector<sf::Text> rootMenu, skillsMenu;
+    int                   rootIndex = 0, skillIndex = 0;
+
+    // Bullet hell
+    BulletHellEngine      engine;
+    bool                  battleEnd = false;
+
+    // Player movement
+    sf::Vector2f          velocity{ 0.f,0.f };
+    float                 speed = 200.f;
+
+    // Enemy visuals: use optional so we can construct after loading
+    sf::Texture           enemyTex;
+    std::optional<sf::Sprite> enemySpr;
+
+    // HP bar & shield
+    std::optional<sf::RectangleShape> hpBarBg, hpBarFg;
+    sf::Texture           shieldTex;
+    std::optional<sf::Sprite> shieldIcon;
+
+    void setupUI();
+    void handleMenuInput(const sf::Event& event);
+    void executeAction();
+    void startEnemyAttack();
+
+    void drawPlayerUI(sf::RenderTarget& target) const;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
 class GameOverScene : public GameScene {
 public:
     GameOverScene(Player& player);
+    void handleEvent(const sf::Event& event) override;
     void update(float dt, const sf::RenderWindow& window) override;
     bool isRespawnRequested() const;
-    void handleEvent(const sf::Event& event) override;
+
 private:
     Player& player;
     sf::Font font;
     bool respawnRequested = false;
-    float lockoutTimer = 0.f;
-    static constexpr float lockoutDuration = 0.5f; // 0.5 seconds lockout
+    float timer = 0.f;
+    static constexpr float lockout = 0.5f;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
-// --- SceneManager ---
 class SceneManager : public sf::Drawable {
 public:
-    enum class State { Map, BulletHell, GameOver, PlayerTurn };
+    enum class State { Map, Battle, GameOver };
     SceneManager();
     void switchTo(State newState, Enemy* battleEnemy = nullptr);
     void handleEvent(const sf::Event& event);
     void update(float dt, sf::RenderWindow& window);
+
 private:
     State currentState;
     std::unique_ptr<GameScene> currentScene;
@@ -91,5 +112,3 @@ private:
     std::vector<Enemy> enemies;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
-
-#endif // SCENEMANAGER_H
