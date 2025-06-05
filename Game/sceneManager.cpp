@@ -1,28 +1,21 @@
 ﻿#include "sceneManager.h"
 #include <iostream>
 #include <algorithm>
-#include <cmath>
+#include <random>
 
-// ---------------- MapScene Implementation ----------------
+// ---------------- MapScene ----------------
 
-MapScene::MapScene(Player& player, std::vector<Enemy>& enemies)
-    : player(player), enemies(enemies), map()
+MapScene::MapScene(Player& p,
+    std::vector<Enemy>& e,
+    Map& m,
+    std::vector<MapObject>& o)
+    : player(p), enemies(e), map(m), objects(o)
 {
-    objects.emplace_back(5, 5, Map::tileSize);
-    objects.emplace_back(7, 8, Map::tileSize);
-    map.setStairs(Map::width - 1, Map::height - 1);
-
     player.setPosition({ Map::tileSize / 2, Map::tileSize / 2 });
-    if (!enemies.empty()) {
-        enemies[0].setPosition({ 9 * Map::tileSize + Map::tileSize / 2,
-                                 7 * Map::tileSize + Map::tileSize / 2 });
-        enemies[0].setType(Enemy::Type::Boss);
-    }
 }
 
-void MapScene::handleEvent(const sf::Event& event)
-{
-    if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
+void MapScene::handleEvent(const sf::Event& ev) {
+    if (auto* key = ev.getIf<sf::Event::KeyPressed>()) {
         int dx = 0, dy = 0;
         switch (key->scancode) {
         case sf::Keyboard::Scan::W: dy = -1; break;
@@ -32,132 +25,149 @@ void MapScene::handleEvent(const sf::Event& event)
         default: return;
         }
         sf::Vector2f pos = player.getPosition();
-        int px = static_cast<int>(pos.x / Map::tileSize);
-        int py = static_cast<int>(pos.y / Map::tileSize);
+        int px = int(pos.x / Map::tileSize), py = int(pos.y / Map::tileSize);
         int nx = px + dx, ny = py + dy;
-
-        // Bounds & passable
-        Tile* target = map.getTile(nx, ny);
-        if (!target || !target->passable) return;
-
-        // Map objects
-        for (auto& obj : objects) {
-            if (obj.getGridX() == nx && obj.getGridY() == ny) {
-                std::cout << "Interacted with object at " << nx << "," << ny << "\n";
-                return;
+        Tile* t = map.getTile(nx, ny);
+        if (!t || !t->passable) return;
+        for (auto& obj : objects)
+            if (obj.getGridX() == nx && obj.getGridY() == ny) return;
+        for (auto& en : enemies)
+            if (!en.isDead()) {
+                int ex = int(en.getPosition().x / Map::tileSize),
+                    ey = int(en.getPosition().y / Map::tileSize);
+                if (ex == nx && ey == ny) { battleEnemy = &en; return; }
             }
-        }
-
-        // Enemies
-        for (auto& e : enemies) {
-            if (!e.isDead()) {
-                int ex = static_cast<int>(e.getPosition().x / Map::tileSize);
-                int ey = static_cast<int>(e.getPosition().y / Map::tileSize);
-                if (ex == nx && ey == ny) {
-                    battleEnemy = &e;
-                    return;
-                }
-            }
-        }
-
-        // Move player
         player.setPosition({ nx * Map::tileSize + Map::tileSize / 2,
-                             ny * Map::tileSize + Map::tileSize / 2 });
-
-        // Win
-        if (target->isStairs && !triggeredBattle()) {
-            atStairs = true;
-            std::cout << "You win!\n";
+                            ny * Map::tileSize + Map::tileSize / 2 });
+        if (t->isStairs && !triggeredBattle()) {
+            std::cout << "You win!\n"; atStairs = true;
         }
     }
 }
 
 void MapScene::update(float, const sf::RenderWindow&) { }
 
-void MapScene::draw(sf::RenderTarget& target, sf::RenderStates states) const
-{
+void MapScene::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     target.draw(map, states);
     for (auto& obj : objects) target.draw(obj, states);
     target.draw(player, states);
-    for (auto& e : enemies)
-        if (!e.isDead()) target.draw(e, states);
+    for (auto& en : enemies) if (!en.isDead()) target.draw(en, states);
 }
 
-// ---------------- BattleScene Implementation ----------------
+// ---------------- BattleScene ----------------
 
 BattleScene::BattleScene(Player& p, Enemy& e)
     : player(p), enemy(e)
 {
-    // Load font
     if (!font.openFromFile("game_over.ttf"))
-        std::cerr << "Failed to load font for BattleScene\n";
+        std::cerr << "Font load failed\n";
 
-    // Load enemy sprite
-    if (e.getType() == Enemy::Type::Basic) {
-        if (!enemyTex.loadFromFile("Assets/basic_enemy.png"))
-            std::cerr << "Failed to load placeholder.png\n";
-        enemySpr.emplace(enemyTex);
-        enemySpr->setOrigin(sf::Vector2f{
-            float(enemyTex.getSize().x) / 2.f,
-            float(enemyTex.getSize().y) / 2.f });
+    // Load enemy texture
+    if (!enemyTex.loadFromFile("Assets/basic_enemy.png")) {/*…*/ }
+    switch (enemy.getType()) {
+    case Enemy::Type::Ghost:
+        enemyTex.loadFromFile("Assets/ghost_enemy.png"); break;
+    case Enemy::Type::Boss:
+        enemyTex.loadFromFile("Assets/boss_enemy.png");  break;
+    default: break;
     }
-    if (e.getType() == Enemy::Type::Ghost) {
-        if (!enemyTex.loadFromFile("Assets/ghost_enemy.png"))
-            std::cerr << "Failed to load placeholder.png\n";
-        enemySpr.emplace(enemyTex);
-        enemySpr->setOrigin(sf::Vector2f{
-            float(enemyTex.getSize().x) / 2.f,
-            float(enemyTex.getSize().y) / 2.f });
-    }
-    if (e.getType() == Enemy::Type::Boss) {
-        if (!enemyTex.loadFromFile("Assets/boss_enemy.png"))
-            std::cerr << "Failed to load placeholder.png\n";
-        enemySpr.emplace(enemyTex);
-        enemySpr->setOrigin(sf::Vector2f{
-            float(enemyTex.getSize().x) / 2.f,
-            float(enemyTex.getSize().y) / 2.f });
-    }
+    enemySpr.emplace(enemyTex);
+    enemySpr->setOrigin({ enemyTex.getSize().x / 2.f,
+                         enemyTex.getSize().y / 2.f });
+
     // Prepare HP bar shapes
     hpBarBg.emplace();
     hpBarFg.emplace();
     hpBarBg->setFillColor(sf::Color::White);
     hpBarFg->setFillColor(sf::Color::Red);
 
-    // Load shield icon
+    // Load and emplace shield
     if (!shieldTex.loadFromFile("Assets/shield.png"))
-        std::cerr << "Failed to load shield.png\n";
+        std::cerr << "Shield load failed\n";
     shieldIcon.emplace(shieldTex);
-    shieldIcon->setScale(sf::Vector2f{ 0.5f, 0.5f });
-    shieldIcon->setOrigin(sf::Vector2f{
-        shieldTex.getSize().x * 0.5f,
-        shieldTex.getSize().y * 0.5f });
+    shieldIcon->setScale({ 0.5f, 0.5f });
+    shieldIcon->setOrigin({ shieldTex.getSize().x / 2.f,
+                           shieldTex.getSize().y / 2.f });
 
     setupUI();
 }
 
-void BattleScene::handleMenuInput(const sf::Event& event)
+void BattleScene::setupUI()
 {
-    if (auto* key = event.getIf<sf::Event::KeyPressed>())
-    {
-        // Determine which menu we’re on
+    rootMenu.clear();
+    for (auto s : { "Attack", "Skills", "Flee" }) {
+        sf::Text t(font,s, 30);
+        t.setFillColor(sf::Color::White);
+        rootMenu.push_back(t);
+    }
+
+    skillsMenu.clear();
+    for (auto s : { "Fireball", "Heal", "Back" }) {
+        sf::Text t(font, s, 30);
+        t.setFillColor(sf::Color::White);
+        skillsMenu.push_back(t);
+    }
+}
+
+void BattleScene::handleMenuInput(const sf::Event& ev)
+{
+    if (auto* k = ev.getIf<sf::Event::KeyPressed>()) {
         auto& menu = (currentState == State::PlayerMenu ? rootMenu : skillsMenu);
-        int& index = (currentState == State::PlayerMenu ? rootIndex : skillIndex);
-        int count = static_cast<int>(menu.size());
+        int& idx = (currentState == State::PlayerMenu ? rootIndex : skillIndex);
+        int cnt = int(menu.size());
 
-        // Up / Down
-        if (key->scancode == sf::Keyboard::Scan::W || key->scancode == sf::Keyboard::Scan::Up)
-            index = (index > 0 ? index - 1 : count - 1);
-        else if (key->scancode == sf::Keyboard::Scan::S || key->scancode == sf::Keyboard::Scan::Down)
-            index = (index < count - 1 ? index + 1 : 0);
-
-        // Confirm
-        else if (key->scancode == sf::Keyboard::Scan::Enter || key->scancode == sf::Keyboard::Scan::Space)
+        if (k->scancode == sf::Keyboard::Scan::W || k->scancode == sf::Keyboard::Scan::Up)
+            idx = (idx > 0 ? idx - 1 : cnt - 1);
+        else if (k->scancode == sf::Keyboard::Scan::S || k->scancode == sf::Keyboard::Scan::Down)
+            idx = (idx < cnt - 1 ? idx + 1 : 0);
+        else if (k->scancode == sf::Keyboard::Scan::Enter ||
+            k->scancode == sf::Keyboard::Scan::Space)
             executeAction();
-
-        // Back from Skills
-        else if (key->scancode == sf::Keyboard::Scan::Escape && currentState == State::SkillsMenu)
+        else if (k->scancode == sf::Keyboard::Scan::Escape &&
+            currentState == State::SkillsMenu)
             currentState = State::PlayerMenu;
     }
+}
+
+void BattleScene::executeAction()
+{
+    if (currentState == State::PlayerMenu) {
+        if (rootIndex == 0)
+            enemy.takeDamage(player.getAtk());
+        else if (rootIndex == 1) {
+            currentState = State::SkillsMenu;
+            return;
+        }
+        else {
+            battleEnd = true;
+            currentState = State::BattleEnded;
+            return;
+        }
+    }
+    else { // Skills menu
+        if (skillIndex == 0)
+            enemy.takeDamage(player.getAtk() * 2);
+        else if (skillIndex == 1)
+            player.heal(20);
+        else { // Back
+            currentState = State::PlayerMenu;
+            return;
+        }
+    }
+
+    if (enemy.isDead()) {
+        battleEnd = true;
+        currentState = State::BattleEnded;
+    }
+    else {
+        startEnemyAttack();
+    }
+}
+
+void BattleScene::startEnemyAttack()
+{
+    currentState = State::EnemyAttack;
+    engine.start(player, enemy);
 }
 
 void BattleScene::handleEvent(const sf::Event& ev)
@@ -166,7 +176,6 @@ void BattleScene::handleEvent(const sf::Event& ev)
         handleMenuInput(ev);
     }
     else if (currentState == State::EnemyAttack) {
-        // Movement pressed
         if (auto* kp = ev.getIf<sf::Event::KeyPressed>()) {
             switch (kp->scancode) {
             case sf::Keyboard::Scan::W: velocity.y = -speed; break;
@@ -176,7 +185,6 @@ void BattleScene::handleEvent(const sf::Event& ev)
             default: break;
             }
         }
-        // Movement released
         if (auto* kr = ev.getIf<sf::Event::KeyReleased>()) {
             switch (kr->scancode) {
             case sf::Keyboard::Scan::W:
@@ -189,183 +197,82 @@ void BattleScene::handleEvent(const sf::Event& ev)
     }
 }
 
-// Below your BattleScene constructor in sceneManager.cpp
-
-void BattleScene::setupUI()
+void BattleScene::update(float dt, const sf::RenderWindow& win)
 {
-    // Root menu: Attack, Skills, Flee
-    rootMenu.clear();
-    std::array<const char*, 3> rootItems = { "Attack", "Skills", "Flee" };
-    for (int i = 0; i < 3; ++i)
-    {
-        sf::Text txt(font, rootItems[i], 30);
-        txt.setFillColor(sf::Color::White);
-        rootMenu.push_back(txt);
-    }
-
-    // Skills menu: Fireball, Heal, Back
-    skillsMenu.clear();
-    std::array<const char*, 3> skillItems = { "Fireball", "Heal", "Back" };
-    for (int i = 0; i < 3; ++i)
-    {
-        sf::Text txt(font, skillItems[i], 30);
-        txt.setFillColor(sf::Color::White);
-        skillsMenu.push_back(txt);
-    }
-}
-
-void BattleScene::executeAction()
-{
-    // Player’s choice from the root menu or skills menu
-    if (currentState == State::PlayerMenu)
-    {
-        switch (rootIndex)
-        {
-        case 0: // Attack
-            enemy.takeDamage(player.getAtk());
-            break;
-
-        case 1: // Skills → switch into skills submenu
-            currentState = State::SkillsMenu;
-            return;
-
-        case 2: // Flee
-            battleEnd = true;
-            currentState = State::BattleEnded;
-            return;
-        }
-    }
-    else if (currentState == State::SkillsMenu)
-    {
-        switch (skillIndex)
-        {
-        case 0: // Fireball
-            enemy.takeDamage(player.getAtk() * 2);
-            break;
-
-        case 1: // Heal
-            player.heal(20);
-            break;
-
-        case 2: // Back to main menu
-            currentState = State::PlayerMenu;
-            return;
-        }
-    }
-
-    // After performing an action, check if enemy died
-    if (enemy.isDead())
-    {
-        battleEnd = true;
-        currentState = State::BattleEnded;
-    }
-    else
-    {
-        // Otherwise let the enemy take its turn
-        startEnemyAttack();
-    }
-}
-
-void BattleScene::startEnemyAttack()
-{
-    // Switch to enemy’s bullet‐hell turn
-    currentState = State::EnemyAttack;
-
-    // Begin spawning bullets targeting the player
-    engine.start(player, enemy);
-}
-
-void BattleScene::update(float dt, const sf::RenderWindow& window)
-{
-    // Move player in bullet‐hell
+    // 1) Player movement during bullet-hell
     if (currentState == State::EnemyAttack) {
         sf::Vector2f pos = player.getPosition();
         pos += velocity * dt;
-        pos.x = std::clamp(pos.x, 0.f, float(window.getSize().x));
-        pos.y = std::clamp(pos.y, 0.f, float(window.getSize().y));
+        pos.x = std::clamp(pos.x, 0.f, float(win.getSize().x));
+        pos.y = std::clamp(pos.y, 0.f, float(win.getSize().y));
         player.setPosition(pos);
     }
 
-    // Highlight menus
+    // 2) Highlight menu items
     if (currentState == State::PlayerMenu) {
         for (int i = 0; i < int(rootMenu.size()); ++i)
             rootMenu[i].setFillColor(i == rootIndex ? sf::Color::Yellow : sf::Color::White);
     }
-    else if (currentState == State::SkillsMenu) {
+    if (currentState == State::SkillsMenu) {
         for (int i = 0; i < int(skillsMenu.size()); ++i)
             skillsMenu[i].setFillColor(i == skillIndex ? sf::Color::Yellow : sf::Color::White);
     }
 
-    // Enemy turn: spawn & move bullets, check collisions
+    // 3) Enemy’s bullet-hell turn
     if (currentState == State::EnemyAttack) {
-        engine.update(dt, window.getSize(), player);
-        if (player.isDead() || engine.isBattleOver()) {
+        engine.update(dt, win.getSize(), player);
+        if (player.isDead()) {
             battleEnd = true;
             currentState = State::BattleEnded;
         }
+        else if (engine.isBattleOver()) {
+            currentState = State::PlayerMenu;
+        }
     }
 
-    // Update HP bar sizes & colors
-    // Region: next 25% of screen
-    float W = float(window.getSize().x);
-    float H = float(window.getSize().y);
+    // 4) Update HP bar & positions (once, here)
+    float W = float(win.getSize().x);
+    float H = float(win.getSize().y);
     float Hs = H * 0.5f, Hb = H * 0.25f;
     float barW = W * 0.8f, barH = Hb * 0.4f;
     float bx = W * 0.1f, by = Hs + (Hb - barH) / 2.f;
 
-    // --- Position enemy sprite and shield icon in update(), not draw() ---
+    if (hpBarBg && hpBarFg) {
+        hpBarBg->setSize({ barW, barH });
+        hpBarBg->setPosition({ bx, by });
+        hpBarBg->setFillColor(
+            enemy.getShields() > 0
+            ? sf::Color(100, 100, 100)
+            : sf::Color::White
+        );
+
+        float pct = float(enemy.getHp()) / float(enemy.getMaxHp());
+        hpBarFg->setSize({ barW * pct, barH });
+        hpBarFg->setPosition({ bx, by });
+    }
+
     if (enemySpr) {
-        float Hs = H * 0.5f;
+        // Top‐half center
         enemySpr->setPosition({ W / 2.f, Hs / 2.f });
     }
 
-    // Position shield icon—only if shields remain
-    if (hpBarBg && shieldIcon && enemy.getShields() > 0) {
-        // hpBarBg was already positioned earlier in update
-        auto pos = hpBarBg->getPosition();
-        float barH = hpBarBg->getSize().y;
-        shieldIcon->setPosition({ pos.x - barH, pos.y + barH / 2.f });
+    if (shieldIcon && enemy.getShields() > 0) {
+        shieldIcon->setPosition({ bx - barH, by + barH / 2.f });
     }
-    if (enemy.getShields() > 0) {
-        hpBarBg->setFillColor(sf::Color(100, 100, 100)); // greyed
-        hpBarFg->setFillColor(sf::Color(100, 100, 100));
-    }
-    else {
-        hpBarBg->setFillColor(sf::Color::White);
-    }
-
-
-    hpBarBg->setSize({ barW, barH });
-    hpBarBg->setPosition({ bx, by });
-    hpBarBg->setFillColor(enemy.getShields() > 0
-        ? sf::Color(100, 100, 100)
-        : sf::Color::White);
-
-    float pct = float(enemy.getHp()) / float(enemy.getMaxHp());
-    hpBarFg->setSize({ barW * pct, barH });
-    hpBarFg->setPosition({ bx, by });
 }
 
-bool BattleScene::isOver() const
+void BattleScene::drawPlayerUI(sf::RenderTarget& t) const
 {
-    return battleEnd;
-}
-
-void BattleScene::drawPlayerUI(sf::RenderTarget& target) const
-{
-    auto size = target.getSize();
-    float W = float(size.x), H = float(size.y);
+    auto sz = t.getSize();
+    float W = float(sz.x), H = float(sz.y);
     float menuH = H * 0.25f, y0 = H - menuH;
 
-    // semi‐transparent background
     sf::RectangleShape bg({ W, menuH });
     bg.setPosition({ 0, y0 });
-    bg.setFillColor({ 0,0,0,180 });
-    target.draw(bg);
+    bg.setFillColor({ 0, 0, 0, 180 });
+    t.draw(bg);
 
-    // choose menu
-    const auto& menu = (currentState == State::PlayerMenu
-        ? rootMenu : skillsMenu);
+    const auto& menu = (currentState == State::PlayerMenu ? rootMenu : skillsMenu);
     int count = int(menu.size());
     if (count == 0) return;
 
@@ -373,134 +280,153 @@ void BattleScene::drawPlayerUI(sf::RenderTarget& target) const
     float textY = y0 + menuH * 0.5f;
 
     for (int i = 0; i < count; ++i) {
-        sf::Text txt = menu[i]; // copy
+        sf::Text txt = menu[i];  // copy
         auto b = txt.getLocalBounds();
         float x = (i + 1) * spacing - (b.position.x + b.size.x / 2.f);
         float y = textY - (b.position.y + b.size.y / 2.f);
-        txt.setPosition({ x,y });
-        target.draw(txt);
+        txt.setPosition({ x, y });
+        t.draw(txt);
     }
 }
 
-void BattleScene::draw(sf::RenderTarget& target, sf::RenderStates) const
+void BattleScene::draw(sf::RenderTarget& t, sf::RenderStates states) const
 {
-    target.clear(sf::Color::Black);
+    t.clear(sf::Color::Black);
 
-    // Draw enemy + HP bar + menu only during player’s turn
     if (currentState == State::PlayerMenu || currentState == State::SkillsMenu) {
-        // Enemy sprite
-        if (enemySpr) {
-            float W = float(target.getSize().x);
-            float H = float(target.getSize().y);
-            float Hs = H * 0.5f;
-            // Position already set in update()
-            target.draw(*enemySpr);
+        if (enemySpr)    t.draw(*enemySpr, states);
+        if (hpBarBg)     t.draw(*hpBarBg, states);
+        if (hpBarFg)     t.draw(*hpBarFg, states);
+        if (shieldIcon && enemy.getShields() > 0) {
+            t.draw(*shieldIcon, states);
+            sf::Text count(font,
+                std::to_string(enemy.getShields()),
+                int(hpBarBg->getSize().y)
+            );
+            count.setFillColor(sf::Color::White);
+            auto ip = shieldIcon->getPosition();
+            auto b = count.getLocalBounds();
+            count.setPosition({
+                ip.x - (b.position.x + b.size.x / 2.f),
+                ip.y - (b.position.y + b.size.y / 2.f)
+                });
+            t.draw(count, states);
         }
-
-        // HP bar
-        if (hpBarBg && hpBarFg) {
-            target.draw(*hpBarBg);
-            target.draw(*hpBarFg);
-
-            // Shield icon + count
-            if (enemy.getShields() > 0 && shieldIcon) {
-                target.draw(*shieldIcon);
-
-                // Centered shield count
-                sf::Text count(font,
-                    std::to_string(enemy.getShields()),
-                    int(hpBarBg->getSize().y));
-                count.setFillColor(sf::Color::White);
-                auto iconPos = shieldIcon->getPosition();
-                auto b = count.getLocalBounds();
-                count.setPosition({
-                    iconPos.x - (b.position.x + b.size.x / 2.f),
-                    iconPos.y - (b.position.y + b.size.y / 2.f)
-                    });
-                target.draw(count);
-            }
-        }
-
-        // Player menu
-        drawPlayerUI(target);
+        drawPlayerUI(t);
     }
     else if (currentState == State::EnemyAttack) {
-        // Only bullet‐hell + player here
-        target.draw(engine, sf::RenderStates::Default);
-        target.draw(player, sf::RenderStates::Default);
+        t.draw(engine, states);
+        t.draw(player, states);
     }
 }
-
-
-GameOverScene::GameOverScene(Player& p) : player(p)
+bool BattleScene::isOver() const
 {
+    return battleEnd;
+}
+
+bool BattleScene::enemyIsDead() const
+{
+    return enemy.isDead();
+}
+
+// ---------------- GameOverScene ----------------
+
+GameOverScene::GameOverScene(Player& p) : player(p) {
     if (!font.openFromFile("game_over.ttf"))
-        std::cerr << "Failed to load font for GameOverScene\n";
+        std::cerr << "GameOver font failed\n";
 }
 
-void GameOverScene::handleEvent(const sf::Event& ev)
-{
-    // lockout if needed
+void GameOverScene::handleEvent(const sf::Event& ev) {
     if (timer < lockout) return;
-    if (auto* k = ev.getIf<sf::Event::KeyPressed>()) {
-        if (k->scancode == sf::Keyboard::Scan::Enter ||
-            k->scancode == sf::Keyboard::Scan::Space)
-        {
+    if (auto* k = ev.getIf<sf::Event::KeyPressed>())
+        if (k->scancode == sf::Keyboard::Scan::Enter || k->scancode == sf::Keyboard::Scan::Space)
             respawnRequested = true;
-        }
-    }
 }
 
-void GameOverScene::update(float dt, const sf::RenderWindow&)
-{
+void GameOverScene::update(float dt, const sf::RenderWindow&) {
     timer += dt;
 }
 
-bool GameOverScene::isRespawnRequested() const
-{
-    return respawnRequested;
-}
+bool GameOverScene::isRespawnRequested()const { return respawnRequested; }
 
-void GameOverScene::draw(sf::RenderTarget& t, sf::RenderStates) const
-{
+void GameOverScene::draw(sf::RenderTarget& t, sf::RenderStates)const {
     t.clear(sf::Color::Black);
-    sf::Text text(font,"GAME OVER\nPress Enter to respawn", 48);
+    sf::Text text(font, "GAME OVER\nPress Enter to respawn", 100);
     text.setFillColor(sf::Color::Red);
     text.setPosition(sf::Vector2f{ 100, 200 });
     t.draw(text);
 }
 
-// ---------------- SceneManager Implementation ----------------
+// ---------------- SceneManager ----------------
 
 SceneManager::SceneManager()
-    : currentState(State::Map)
+    : currentState(State::Map),
+    player(),
+    enemies(),
+    map(),
+    mapObjects()
 {
+    // 1) Initialize your map and objects
     enemies.emplace_back(Enemy::Type::Basic);
+    enemies.emplace_back(Enemy::Type::Ghost);  // example: two enemies
+    enemies.emplace_back(Enemy::Type::Boss);   // example: three enemies
+
+    mapObjects.emplace_back(5, 5, Map::tileSize);
+    mapObjects.emplace_back(7, 8, Map::tileSize);
+    map.setStairs(Map::width - 1, Map::height - 1);
+
+    // 2) Spawn enemies on random passable tiles
+    //    Gather all passable tile coords
+    std::vector<sf::Vector2i> spawnTiles;
+    spawnTiles.reserve(Map::width * Map::height);
+    for (int y = 0; y < Map::height; ++y) {
+        for (int x = 0; x < Map::width; ++x) {
+            Tile* t = map.getTile(x, y);
+            if (t && t->passable && !t->isStairs) {
+                spawnTiles.emplace_back(x, y);
+            }
+        }
+    }
+
+    // 3) Shuffle and assign one tile per enemy
+    static std::mt19937_64 rng{ std::random_device{}() };
+    std::shuffle(spawnTiles.begin(), spawnTiles.end(), rng);
+
+    for (size_t i = 0; i < enemies.size() && i < spawnTiles.size(); ++i) {
+        int tx = spawnTiles[i].x;
+        int ty = spawnTiles[i].y;
+        // Position enemy at tile center
+        enemies[i].setPosition({
+            tx * Map::tileSize + Map::tileSize * 0.5f,
+            ty * Map::tileSize + Map::tileSize * 0.5f
+            });
+    }
+
+    // 4) Start in map mode
     switchTo(State::Map);
 }
 
-void SceneManager::switchTo(State newState, Enemy* e)
-{
-    currentState = newState;
-    if (newState == State::Map) {
-        currentScene = std::make_unique<MapScene>(player, enemies);
+void SceneManager::switchTo(State ns, Enemy* be) {
+    currentState = ns;
+    if (ns == State::Map)
+        currentScene = std::make_unique<MapScene>(player, enemies, map, mapObjects);
+    else if (ns == State::Battle && be) {
+        preBattlePos = player.getPosition();
+        battleInitiated = true;
+        currentScene = std::make_unique<BattleScene>(player, *be);
     }
-    else if (newState == State::Battle && e) {
-        currentScene = std::make_unique<BattleScene>(player, *e);
-    }
-    else if (newState == State::GameOver) {
+    else if (ns == State::GameOver) {
         currentScene = std::make_unique<GameOverScene>(player);
     }
 }
 
-void SceneManager::handleEvent(const sf::Event& ev)
-{
+void SceneManager::handleEvent(const sf::Event& ev) {
     if (currentScene) currentScene->handleEvent(ev);
 }
 
-void SceneManager::update(float dt, sf::RenderWindow& win)
-{
-    if (currentScene) currentScene->update(dt, win);
+void SceneManager::update(float dt, sf::RenderWindow& w) {
+    if (!currentScene) return;
+    currentScene->update(dt, w);
 
     if (currentState == State::Map) {
         auto* ms = dynamic_cast<MapScene*>(currentScene.get());
@@ -513,7 +439,11 @@ void SceneManager::update(float dt, sf::RenderWindow& win)
         auto* bs = dynamic_cast<BattleScene*>(currentScene.get());
         if (bs && bs->isOver()) {
             if (player.isDead()) switchTo(State::GameOver);
-            else switchTo(State::Map);
+            else if (bs->enemyIsDead()) {
+                player.setPosition(preBattlePos);
+                switchTo(State::Map);
+            }
+            battleInitiated = false;
         }
     }
     else if (currentState == State::GameOver) {
@@ -526,7 +456,7 @@ void SceneManager::update(float dt, sf::RenderWindow& win)
     }
 }
 
-void SceneManager::draw(sf::RenderTarget& target, sf::RenderStates states) const
-{
-    if (currentScene) target.draw(*currentScene, states);
+void SceneManager::draw(sf::RenderTarget& t, sf::RenderStates s) const {
+    if (currentScene) t.draw(*currentScene, s);
 }
+
