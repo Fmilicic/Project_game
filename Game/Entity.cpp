@@ -97,7 +97,7 @@ void Enemy::configureStats()
     switch (type) {
     case Type::Basic: maxHp = 30;  atk = 8;  def = 2;  shields = 0; break;
     case Type::Ghost: maxHp = 50;  atk = 12; def = 5;  shields = 1; break;
-    case Type::Boss:  maxHp = 150; atk = 20; def = 10; shields = 2; break;
+    case Type::Boss:  maxHp = 150; atk = 1 /*temporary for testing purposes*/; def = 10; shields = 2; break;
     }
     hp = maxHp;
 }

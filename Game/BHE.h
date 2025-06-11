@@ -7,49 +7,61 @@
 
 class Bullet {
 public:
-    Bullet(const sf::Vector2f& position, const sf::Vector2f& velocity, float radius);
+    Bullet(const sf::Vector2f& position, const sf::Vector2f& velocity, float radius, std::optional<float> lifetime = std::nullopt);
     void update(float dt);
     void draw(sf::RenderTarget& target) const;
     bool isOffscreen(const sf::Vector2u& windowSize) const;
     bool intersectsCircle(const sf::Vector2f& center, float radius) const;
+    bool isExpired() const;
 private:
     sf::CircleShape shape;
     sf::Vector2f   velocity;
+    std::optional<float> lifetime;
 };
 
 class BulletHellEngine : public sf::Drawable {
 public:
+    // Pattern is now public to be accessible for setup
+    struct Pattern {
+        float duration;
+        float spawnInterval;
+        float timer;
+        float intervalTimer;
+        std::function<void(Player&)> spawnAction;
+        std::optional<std::function<void(Pattern&)>> onTurnStart;
+    };
+
     BulletHellEngine();
-
     void start(Player& playerRef, Enemy& enemyRef);
-
     void update(float dt, const sf::Vector2u& windowSize, Player& playerRef);
-
-    /// True when all patterns have run and bullets have cleared
     bool isBattleOver() const;
 
 private:
-    struct Pattern {
-        float            duration;       // pattern duration
-        float            spawnInterval;  // wave interval
-        float            timer = 0.f;    // time since start
-        float            intervalTimer = 0.f; // time since last spawn
-        std::function<void()> spawnAction;    // called every spawnInterval
-    };
+    // Active patterns for the current attack phase
+    std::vector<Pattern> patterns;
+
+    // Pools of all available patterns, built once
+    std::vector<Pattern> genericPool;
+    std::vector<Pattern> bossPoolHigh; // 100-51% HP
+    std::vector<Pattern> bossPoolMid;  // 50-26% HP
+    std::vector<Pattern> bossPoolLow;  // 25-0% HP
 
     std::vector<std::unique_ptr<Bullet>> bullets;
-    std::vector<Pattern>                 patterns;
-    std::size_t                          currentPattern = 0;
-    float                                patternTimer = 0.f;
-    float noBulletTimer = 0.0f;
-    float clearThreshold = 2.0f;
+    std::size_t currentPattern = 0;
     Enemy* enemy = nullptr;
+    float       noBulletTimer = 0.f;
+    const float clearThreshold = 1.f;
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-
     void advancePattern();
 
-    void setupPatterns(Enemy::Type type, const sf::Vector2f& origin);
+    // One-time setup to build the pattern pools
+    void setupPools();
+    // Selects patterns for the current attack phase from the pools
+    void pickPatternsForPhase();
+    Pattern makeLionSwipesPattern();
+    Pattern makeLionRoarPattern();
 };
+
 
 

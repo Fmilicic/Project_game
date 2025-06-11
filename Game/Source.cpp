@@ -47,12 +47,13 @@ assumption 10: for win condition, let's start of with: collect key (either as ma
 #include <SFML/Graphics.hpp>
 #include "sceneManager.h"
 #include "Entity.h"
+#include <ctime>
 int main() {
     sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 800, 600 }), "RPG Bullet Hell", sf::Style::Default);
     sf::View view(sf::FloatRect(sf::Vector2f{ 0, 0 }, sf::Vector2f{ 800, 600 })); // Logical game area
 
     SceneManager sceneManager;
-
+    srand(time(nullptr));
     sf::Clock clock;
     while (window.isOpen()) {
         while (auto event = window.pollEvent()) {

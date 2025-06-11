@@ -137,8 +137,10 @@ void BattleScene::executeAction()
         }
     }
     else { 
-        if (skillIndex == 0)
-            enemy.takeDamage(player.getAtk() * 2);
+        if (skillIndex == 0) {
+            enemy.takeDamage(1);
+            enemy.takeDamage(enemy.getHp()/2 + player.getAtk()*2);
+        }
         else if (skillIndex == 1)
             player.heal(20);
         else { 
@@ -354,6 +356,10 @@ SceneManager::SceneManager()
     enemies.emplace_back(Enemy::Type::Ghost);  
     enemies.emplace_back(Enemy::Type::Boss);   
 
+    if (!hudFont.openFromFile("game_over.ttf")) {
+        throw std::runtime_error("FATAL ERROR: Could not load HUD font 'game_over.ttf'.");
+    }
+
     mapObjects.emplace_back(5, 5, Map::tileSize);
     mapObjects.emplace_back(7, 8, Map::tileSize);
     map.setStairs(Map::width - 1, Map::height - 1);
@@ -439,5 +445,23 @@ void SceneManager::update(float dt, sf::RenderWindow& w) {
 
 void SceneManager::draw(sf::RenderTarget& t, sf::RenderStates s) const {
     if (currentScene) t.draw(*currentScene, s);
+    drawPlayerHUD(t, s);
 }
 
+void SceneManager::drawPlayerHUD(sf::RenderTarget& target, sf::RenderStates states) const {
+    std::string hudText = "HP: " + std::to_string(player.getHp()) + "/" + std::to_string(player.getMaxHp())
+        + "  |  Shields: " + std::to_string(player.getShields());
+
+    sf::Text text(hudFont, hudText, 40);
+    text.setFillColor(sf::Color::White);
+    text.setPosition(sf::Vector2f{ 10.f, -10.f });
+
+    sf::RectangleShape bg;
+    sf::FloatRect textBounds = text.getLocalBounds();
+    bg.setSize(sf::Vector2f(textBounds.size.x + 20.f, textBounds.size.y + 20.f));
+    bg.setPosition(sf::Vector2f(10, 10));
+    bg.setFillColor(sf::Color(0, 0, 0, 150));
+
+    target.draw(bg);
+    target.draw(text);
+}

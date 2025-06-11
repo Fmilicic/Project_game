@@ -56,7 +56,7 @@ private:
     Enemy& enemy;
     State   currentState = State::PlayerMenu;
 
-    sf::Font              font;
+    mutable sf::Font              font;
     std::vector<sf::Text> rootMenu, skillsMenu;
     int                   rootIndex = 0, skillIndex = 0;
 
@@ -91,7 +91,7 @@ public:
     bool isRespawnRequested() const;
 private:
     Player& player;
-    sf::Font font;
+    mutable sf::Font font;
     bool     respawnRequested = false;
     float    timer = 0.f;
     static constexpr float lockout = 0.5f;
@@ -113,6 +113,9 @@ private:
 
     Player                     player;
     std::vector<Enemy>         enemies;
+
+    mutable sf::Font hudFont;
+    void drawPlayerHUD(sf::RenderTarget& target, sf::RenderStates states) const;
 
     // persistent map
     Map                         map;
