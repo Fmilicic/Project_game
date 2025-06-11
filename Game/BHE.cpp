@@ -4,8 +4,6 @@
 #include <cmath>
 #include <iostream>
 
-// -------- Bullet Implementation --------
-
 Bullet::Bullet(const sf::Vector2f& pos, const sf::Vector2f& vel, float radius)
     : velocity(vel)
 {
@@ -36,8 +34,6 @@ bool Bullet::intersectsCircle(const sf::Vector2f& c, float r) const {
     return dist2 <= sum * sum;
 }
 
-// -------- BulletHellEngine Implementation --------
-
 BulletHellEngine::BulletHellEngine() = default;
 
 void BulletHellEngine::start(Player& playerRef, Enemy& enemyRef) {
@@ -47,10 +43,9 @@ void BulletHellEngine::start(Player& playerRef, Enemy& enemyRef) {
     currentPattern = 0;
     patternTimer = 0.f;
 
-    // Enemy origin for spawning
     sf::Vector2f origin = enemy->getPosition();
 
-    // Set up patterns based on enemy type
+    // Set patterns based on enemy type
     setupPatterns(enemy->getType(), origin);
 }
 
@@ -59,7 +54,7 @@ void BulletHellEngine::update(float dt,
 {
     if (!enemy) return;
 
-    // ① Only run a pattern if one remains
+    // run pattern if one remains
     if (currentPattern < patterns.size())
     {
         auto& pat = patterns[currentPattern];
@@ -75,10 +70,9 @@ void BulletHellEngine::update(float dt,
         }
     }
 
-    // ② Move bullets
     for (auto& b : bullets) b->update(dt);
 
-    // ③ Collision and off-screen removal
+    // Collision and off-screen removal
     bullets.erase(
         std::remove_if(bullets.begin(), bullets.end(),
             [&](auto& b) {
@@ -92,7 +86,7 @@ void BulletHellEngine::update(float dt,
             }),
         bullets.end());
 
-    // ④ Once *all* patterns are done, wait for bullets to clear
+    // Once patterns are done, wait for bullets to clear
     if (currentPattern >= patterns.size() && bullets.empty())
         noBulletTimer += dt;
 }
@@ -122,16 +116,17 @@ void BulletHellEngine::draw(sf::RenderTarget& target, sf::RenderStates states) c
 
 void BulletHellEngine::setupPatterns(Enemy::Type type, const sf::Vector2f& origin)
 {
-    // static RNG with static storage: no capture needed
+    // static RNG with static storage
     static std::mt19937 gen{ std::random_device{}() };
 
-    // Local distributions
+    // distributions
     std::uniform_real_distribution<float> xDist(50.f, 750.f);
     std::uniform_real_distribution<float> speedDist(150.f, 300.f);
 
     if (type == Enemy::Type::Basic) {
         // single‐bullet pattern for 4s, every 0.5s
-        patterns.emplace_back(Pattern{
+        patterns.emplace_back(
+            Pattern{
             /*duration*/      4.f,
             /*spawnInterval*/ 0.5f,
             /*timer*/         0.f,
@@ -148,7 +143,7 @@ void BulletHellEngine::setupPatterns(Enemy::Type type, const sf::Vector2f& origi
             });
     }
     else if (type == Enemy::Type::Ghost) {
-        // star‐burst for 5s, every 1s
+        // 5s star‐burst, every 1s
         patterns.emplace_back(Pattern{
             5.f, 1.f, 0.f, 0.f,
             [this, origin]() {
@@ -164,7 +159,7 @@ void BulletHellEngine::setupPatterns(Enemy::Type type, const sf::Vector2f& origi
                 }
             }
             });
-        // downward shots for 3s, every 0.4s
+        // 3s downward shots, every 0.4s
         patterns.emplace_back(Pattern{
             3.f, 0.4f, 0.f, 0.f,
             [this, xDist, speedDist]() mutable {
@@ -179,7 +174,7 @@ void BulletHellEngine::setupPatterns(Enemy::Type type, const sf::Vector2f& origi
             });
     }
     else if (type == Enemy::Type::Boss) {
-        // full circle for 6s, every 1.5s
+        // 6s full circle, every 1.5s
         patterns.emplace_back(Pattern{
             6.f, 1.5f, 0.f, 0.f,
             [this, origin]() {
@@ -195,7 +190,7 @@ void BulletHellEngine::setupPatterns(Enemy::Type type, const sf::Vector2f& origi
                 }
             }
             });
-        // star burst for 5s, every 1s
+        // 5s star burst, every 1s
         patterns.emplace_back(Pattern{
             5.f, 1.f, 0.f, 0.f,
             [this, origin]() {
@@ -211,7 +206,7 @@ void BulletHellEngine::setupPatterns(Enemy::Type type, const sf::Vector2f& origi
                 }
             }
             });
-        // downward blitz for 4s, every 0.2s
+        // 4s downward blitz, every 0.2s
         patterns.emplace_back(Pattern{
             4.f, 0.2f, 0.f, 0.f,
             [this, xDist]() mutable {
@@ -223,7 +218,7 @@ void BulletHellEngine::setupPatterns(Enemy::Type type, const sf::Vector2f& origi
                 ));
             }
             });
-        // rapid salvo for 3s, every 0.1s
+        // 3s rapid salvo, every 0.1s
         patterns.emplace_back(Pattern{
             3.f, 0.1f, 0.f, 0.f,
             [this, xDist]() mutable {

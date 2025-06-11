@@ -1,6 +1,15 @@
-﻿  sceneManager.cpp
-C:\Users\User\Desktop\dsa_hw\game_project\Game\Game\sceneManager.cpp(69,30): warning C4834: discarding return value of function with [[nodiscard]] attribute
-C:\Users\User\Desktop\dsa_hw\game_project\Game\Game\sceneManager.cpp(71,30): warning C4834: discarding return value of function with [[nodiscard]] attribute
+﻿  BHE.cpp
+  Entity.cpp
+  Entity.h
+  Map.cpp
+  MapObject.cpp
+  sceneManager.cpp
+C:\Users\User\Desktop\dsa_hw\game_project\Game\Game\sceneManager.cpp(63,30): warning C4834: discarding return value of function with [[nodiscard]] attribute
+C:\Users\User\Desktop\dsa_hw\game_project\Game\Game\sceneManager.cpp(65,30): warning C4834: discarding return value of function with [[nodiscard]] attribute
+  sceneManager.h
+  Source.cpp
+  Tile.cpp
+  Generating Code...
 x64\Debug\Entity.obj : warning LNK4042: object specified more than once; extras ignored
 x64\Debug\sceneManager.obj : warning LNK4042: object specified more than once; extras ignored
 sfml-graphics-s-d.lib(Transformable.obj) : warning LNK4099: PDB '' was not found with 'sfml-graphics-s-d.lib(Transformable.obj)' or at ''; linking object as if no debug info

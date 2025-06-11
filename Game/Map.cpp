@@ -8,7 +8,6 @@ Map::Map()
             tiles.emplace_back(x, y, tileSize, true, false);
         }
     }
-    // Example wall
     for (int y = 5; y < 10; ++y)
         setPassable(10, y, false);
 }

@@ -21,10 +21,8 @@ class BulletHellEngine : public sf::Drawable {
 public:
     BulletHellEngine();
 
-    /// Initialize pattern queue based on enemy type
     void start(Player& playerRef, Enemy& enemyRef);
 
-    /// Update bullets and pattern timers
     void update(float dt, const sf::Vector2u& windowSize, Player& playerRef);
 
     /// True when all patterns have run and bullets have cleared
@@ -32,9 +30,9 @@ public:
 
 private:
     struct Pattern {
-        float            duration;       // total seconds for this pattern
-        float            spawnInterval;  // seconds between spawns
-        float            timer = 0.f;    // elapsed since pattern start
+        float            duration;       // pattern duration
+        float            spawnInterval;  // wave interval
+        float            timer = 0.f;    // time since start
         float            intervalTimer = 0.f; // time since last spawn
         std::function<void()> spawnAction;    // called every spawnInterval
     };
@@ -44,16 +42,13 @@ private:
     std::size_t                          currentPattern = 0;
     float                                patternTimer = 0.f;
     float noBulletTimer = 0.0f;
-    float clearThreshold = 3.0f;
+    float clearThreshold = 2.0f;
     Enemy* enemy = nullptr;
 
-    /// Draw all bullets
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
-    /// Advance to the next pattern
     void advancePattern();
 
-    /// Factory for patterns by enemy type
     void setupPatterns(Enemy::Type type, const sf::Vector2f& origin);
 };
 

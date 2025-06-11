@@ -61,8 +61,12 @@ int main() {
 
             // Handle window resizing
             if (const auto* resized = event->getIf<sf::Event::Resized>()) {
-                // Update the view to match the new window size and show more/less of the world
-                sf::FloatRect visibleArea({ 0.f, 0.f }, sf::Vector2f(resized->size));
+                // Make the view cover the entire new window, in the same logical coords
+                sf::FloatRect visibleArea(
+                    { 0.f, 0.f },
+                    { static_cast<float>(resized->size.x),
+                      static_cast<float>(resized->size.y) }
+                );
                 window.setView(sf::View(visibleArea));
             }
 
@@ -72,7 +76,7 @@ int main() {
         float dt = clock.restart().asSeconds();
         sceneManager.update(dt, window);
 
-        window.setView(view); // Always set the view before drawing
+        window.setView(view);
         window.clear();
         window.draw(sceneManager);
         window.display();

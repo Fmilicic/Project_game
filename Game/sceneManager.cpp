@@ -3,15 +3,12 @@
 #include <algorithm>
 #include <random>
 
-// ---------------- MapScene ----------------
-
 MapScene::MapScene(Player& p,
     std::vector<Enemy>& e,
     Map& m,
     std::vector<MapObject>& o)
     : player(p), enemies(e), map(m), objects(o)
 {
-    player.setPosition({ Map::tileSize / 2, Map::tileSize / 2 });
 }
 
 void MapScene::handleEvent(const sf::Event& ev) {
@@ -54,16 +51,13 @@ void MapScene::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     for (auto& en : enemies) if (!en.isDead()) target.draw(en, states);
 }
 
-// ---------------- BattleScene ----------------
-
 BattleScene::BattleScene(Player& p, Enemy& e)
     : player(p), enemy(e)
 {
     if (!font.openFromFile("game_over.ttf"))
         std::cerr << "Font load failed\n";
 
-    // Load enemy texture
-    if (!enemyTex.loadFromFile("Assets/basic_enemy.png")) {/*…*/ }
+    if (!enemyTex.loadFromFile("Assets/basic_enemy.png")) { }
     switch (enemy.getType()) {
     case Enemy::Type::Ghost:
         enemyTex.loadFromFile("Assets/ghost_enemy.png"); break;
@@ -75,17 +69,15 @@ BattleScene::BattleScene(Player& p, Enemy& e)
     enemySpr->setOrigin({ enemyTex.getSize().x / 2.f,
                          enemyTex.getSize().y / 2.f });
 
-    // Prepare HP bar shapes
     hpBarBg.emplace();
     hpBarFg.emplace();
     hpBarBg->setFillColor(sf::Color::White);
     hpBarFg->setFillColor(sf::Color::Red);
 
-    // Load and emplace shield
     if (!shieldTex.loadFromFile("Assets/shield.png"))
         std::cerr << "Shield load failed\n";
     shieldIcon.emplace(shieldTex);
-    shieldIcon->setScale({ 0.5f, 0.5f });
+    shieldIcon->setScale({ 0.3f, 0.3f });
     shieldIcon->setOrigin({ shieldTex.getSize().x / 2.f,
                            shieldTex.getSize().y / 2.f });
 
@@ -144,12 +136,12 @@ void BattleScene::executeAction()
             return;
         }
     }
-    else { // Skills menu
+    else { 
         if (skillIndex == 0)
             enemy.takeDamage(player.getAtk() * 2);
         else if (skillIndex == 1)
             player.heal(20);
-        else { // Back
+        else { 
             currentState = State::PlayerMenu;
             return;
         }
@@ -199,7 +191,6 @@ void BattleScene::handleEvent(const sf::Event& ev)
 
 void BattleScene::update(float dt, const sf::RenderWindow& win)
 {
-    // 1) Player movement during bullet-hell
     if (currentState == State::EnemyAttack) {
         sf::Vector2f pos = player.getPosition();
         pos += velocity * dt;
@@ -208,7 +199,6 @@ void BattleScene::update(float dt, const sf::RenderWindow& win)
         player.setPosition(pos);
     }
 
-    // 2) Highlight menu items
     if (currentState == State::PlayerMenu) {
         for (int i = 0; i < int(rootMenu.size()); ++i)
             rootMenu[i].setFillColor(i == rootIndex ? sf::Color::Yellow : sf::Color::White);
@@ -218,7 +208,6 @@ void BattleScene::update(float dt, const sf::RenderWindow& win)
             skillsMenu[i].setFillColor(i == skillIndex ? sf::Color::Yellow : sf::Color::White);
     }
 
-    // 3) Enemy’s bullet-hell turn
     if (currentState == State::EnemyAttack) {
         engine.update(dt, win.getSize(), player);
         if (player.isDead()) {
@@ -230,7 +219,6 @@ void BattleScene::update(float dt, const sf::RenderWindow& win)
         }
     }
 
-    // 4) Update HP bar & positions (once, here)
     float W = float(win.getSize().x);
     float H = float(win.getSize().y);
     float Hs = H * 0.5f, Hb = H * 0.25f;
@@ -242,9 +230,10 @@ void BattleScene::update(float dt, const sf::RenderWindow& win)
         hpBarBg->setPosition({ bx, by });
         hpBarBg->setFillColor(
             enemy.getShields() > 0
-            ? sf::Color(100, 100, 100)
+            ? sf::Color(130, 100, 100)
             : sf::Color::White
         );
+        hpBarFg->setFillColor(enemy.getShields() > 0 ? sf::Color(100, 100, 100) : sf::Color::Red);
 
         float pct = float(enemy.getHp()) / float(enemy.getMaxHp());
         hpBarFg->setSize({ barW * pct, barH });
@@ -252,7 +241,6 @@ void BattleScene::update(float dt, const sf::RenderWindow& win)
     }
 
     if (enemySpr) {
-        // Top‐half center
         enemySpr->setPosition({ W / 2.f, Hs / 2.f });
     }
 
@@ -280,7 +268,7 @@ void BattleScene::drawPlayerUI(sf::RenderTarget& t) const
     float textY = y0 + menuH * 0.5f;
 
     for (int i = 0; i < count; ++i) {
-        sf::Text txt = menu[i];  // copy
+        sf::Text txt = menu[i]; 
         auto b = txt.getLocalBounds();
         float x = (i + 1) * spacing - (b.position.x + b.size.x / 2.f);
         float y = textY - (b.position.y + b.size.y / 2.f);
@@ -329,8 +317,6 @@ bool BattleScene::enemyIsDead() const
     return enemy.isDead();
 }
 
-// ---------------- GameOverScene ----------------
-
 GameOverScene::GameOverScene(Player& p) : player(p) {
     if (!font.openFromFile("game_over.ttf"))
         std::cerr << "GameOver font failed\n";
@@ -357,8 +343,6 @@ void GameOverScene::draw(sf::RenderTarget& t, sf::RenderStates)const {
     t.draw(text);
 }
 
-// ---------------- SceneManager ----------------
-
 SceneManager::SceneManager()
     : currentState(State::Map),
     player(),
@@ -366,17 +350,14 @@ SceneManager::SceneManager()
     map(),
     mapObjects()
 {
-    // 1) Initialize your map and objects
     enemies.emplace_back(Enemy::Type::Basic);
-    enemies.emplace_back(Enemy::Type::Ghost);  // example: two enemies
-    enemies.emplace_back(Enemy::Type::Boss);   // example: three enemies
+    enemies.emplace_back(Enemy::Type::Ghost);  
+    enemies.emplace_back(Enemy::Type::Boss);   
 
     mapObjects.emplace_back(5, 5, Map::tileSize);
     mapObjects.emplace_back(7, 8, Map::tileSize);
     map.setStairs(Map::width - 1, Map::height - 1);
 
-    // 2) Spawn enemies on random passable tiles
-    //    Gather all passable tile coords
     std::vector<sf::Vector2i> spawnTiles;
     spawnTiles.reserve(Map::width * Map::height);
     for (int y = 0; y < Map::height; ++y) {
@@ -388,21 +369,20 @@ SceneManager::SceneManager()
         }
     }
 
-    // 3) Shuffle and assign one tile per enemy
     static std::mt19937_64 rng{ std::random_device{}() };
     std::shuffle(spawnTiles.begin(), spawnTiles.end(), rng);
 
     for (size_t i = 0; i < enemies.size() && i < spawnTiles.size(); ++i) {
         int tx = spawnTiles[i].x;
         int ty = spawnTiles[i].y;
-        // Position enemy at tile center
         enemies[i].setPosition({
             tx * Map::tileSize + Map::tileSize * 0.5f,
             ty * Map::tileSize + Map::tileSize * 0.5f
             });
-    }
 
-    // 4) Start in map mode
+
+    }
+    player.setPosition({ Map::tileSize / 2.f, Map::tileSize / 2.f });
     switchTo(State::Map);
 }
 
@@ -451,6 +431,7 @@ void SceneManager::update(float dt, sf::RenderWindow& w) {
         if (gs && gs->isRespawnRequested()) {
             player.reset();
             for (auto& e : enemies) e.reset();
+            player.setPosition({ Map::tileSize / 2.f, Map::tileSize / 2.f });
             switchTo(State::Map);
         }
     }

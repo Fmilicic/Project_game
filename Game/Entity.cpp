@@ -2,8 +2,6 @@
 #include <algorithm>
 #include <iostream>
 
-// ========== ENTITY BASE CLASS ==========
-
 Entity::Entity()
 {
     shape.setRadius(15.f);
@@ -63,8 +61,6 @@ void Entity::draw(sf::RenderTarget& target, sf::RenderStates states) const
     target.draw(shape, states);
 }
 
-// ========== PLAYER CLASS ==========
-
 Player::Player()
 {
     maxHp = 100; hp = maxHp;
@@ -79,8 +75,6 @@ void Player::setStats(int hp_, int atk_, int def_, int shields_)
     maxHp = hp_; hp = hp_;
     atk = atk_; def = def_; shields = shields_;
 }
-
-// ========== ENEMY CLASS ==========
 
 Enemy::Enemy(Type t) : type(t)
 {
