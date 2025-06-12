@@ -441,13 +441,12 @@ void BulletHellEngine::pickPatternsForPhase() {
 
 
     for (auto& pat : patterns) {
-        // Reset timers for all patterns.
         pat.timer = 0.f;
         pat.intervalTimer = 0.f;
 
-        // If this pattern has an onTurnStart initializer, call it now.
+        // If pattern has onTurnStart initializer, call it 
         if (pat.onTurnStart) {
-            // Call the initializer function, pass reference to pattern so it can be modified 
+            // Call initializer function, pass pattern reference
             (*pat.onTurnStart)(pat);
         }
     }
@@ -499,7 +498,6 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionSwipesPattern() {
                     static std::mt19937 gen{ std::random_device{}() };
                     const sf::Vector2f target_pos = player.getPosition();
 
-                    // THIS IS THE RESTORED SWIPE LOGIC
                     for (const auto& p : lion_art_points) {
                         sf::Vector2f spawn_pos(lion_area_offset_x + p.x * lion_area_width, lion_area_offset_y + p.y * lion_area_height);
                         sf::Vector2f direction = target_pos - spawn_pos;
@@ -542,7 +540,6 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionRoarPattern() {
                     {0.85f, 0.45f}, {0.78f, 0.42f}, {0.72f, 0.45f}, {0.78f, 0.50f},
                     {0.70f, 0.25f}, {0.60f, 0.20f}, {0.50f, 0.18f}, {0.40f, 0.22f}, {0.30f, 0.35f},
                     {0.80f, 0.35f},
-                    // The jaw and lower mane are removed here, but the chin is kept.
                     {0.60f, 1.0f}, {0.70f, 0.96f}
                 };
 
@@ -555,7 +552,6 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionRoarPattern() {
                 if (roar_timer >= time_between_roar_lines) {
                     roar_timer = 0.f;
 
-                    // THIS IS THE RESTORED ROAR LOGIC
                     float roar_start_y = lion_area_offset_y + (0.7f * lion_area_height);
                     float roar_start_x = lion_area_offset_x + (0.8f * lion_area_width);
                     for (int i = 0; i < 6; ++i) {

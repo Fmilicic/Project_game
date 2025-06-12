@@ -1,6 +1,8 @@
 #pragma once
+
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <queue>
 
 struct Tile {
     sf::RectangleShape shape;
@@ -14,17 +16,25 @@ struct Tile {
 
 class Map : public sf::Drawable {
 public:
-    static constexpr int width = 20;
-    static constexpr int height = 15;
-    static constexpr float tileSize = 40.f;
+    // NOTE: Dimensions adjusted for a balance of size and visibility.
+    static constexpr int width = 50;
+    static constexpr int height = 40;
+    static constexpr float tileSize = 24.f;
+
+    void regenerate();
+    std::vector<sf::Vector2i> findLargestConnectedArea();
 
     Map();
     Tile* getTile(int x, int y);
-    Tile* getTileAtPixel(float px, float py);
     void setStairs(int x, int y);
-    void setPassable(int x, int y, bool pass);
 
 private:
     std::vector<Tile> tiles;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+
+    // Helper functions for map generation
+    void generateMazeSkeleton();
+    void applyCellularAutomata(int iterations);
+    void removeSmallRegions();
+    int countWallNeighbors(int x, int y);
 };

@@ -1,5 +1,7 @@
 #pragma once
+
 #include <SFML/Graphics.hpp>
+#include "MapObject.h"
 
 class Entity : public sf::Drawable {
 public:
@@ -10,14 +12,14 @@ public:
     void heal(int amount);
     virtual void reset();
     bool isDead() const;
-    int  getHp() const;
-    int  getAtk() const;
-    int  getDef() const;
-    int  getShields() const;
+    int getHp() const;
+    int getAtk() const;
+    int getDef() const;
+    int getShields() const;
+    int getMaxHp() const;
     void setPosition(const sf::Vector2f& pos);
     sf::Vector2f getPosition() const;
     float getRadius() const;
-    int getMaxHp() const;
 
 protected:
     int maxHp = 100, hp = 100;
@@ -31,6 +33,7 @@ public:
     Player();
     void update(float dt) override;
     void setStats(int hp, int atk, int def, int shields);
+    void applyBuff(MapObject::BuffType type);
 };
 
 class Enemy : public Entity {
@@ -45,3 +48,5 @@ private:
     void configureStats();
     Type type;
 };
+
+
