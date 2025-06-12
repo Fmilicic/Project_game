@@ -1,7 +1,10 @@
 #pragma once
+
 #include <SFML/Graphics.hpp>
 #include <memory>
 #include <vector>
+#include <string> 
+#include <deque>  
 #include "Entity.h"
 #include "Map.h"
 #include "MapObject.h"
@@ -13,6 +16,7 @@ public:
     virtual void handleEvent(const sf::Event& ev) = 0;
     virtual void update(float dt, const sf::RenderWindow& window) = 0;
 };
+
 class MapScene : public GameScene {
 public:
     MapScene(Player& player, std::vector<Enemy>& enemies, Map& map, std::vector<MapObject>& objects, bool isBossDefeated);
@@ -32,9 +36,10 @@ private:
     bool bossDefeated = false;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
+
 class GameOverScene : public GameScene {
 public:
-    GameOverScene(Player& player);
+    GameOverScene(Player& player, bool isVictory = false);
     void handleEvent(const sf::Event& ev) override;
     void update(float dt, const sf::RenderWindow& window) override;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -45,6 +50,7 @@ private:
     bool respawnRequested = false;
     float timer = 0.f;
     static constexpr float lockout = 0.5f;
+    bool victory;
 };
 
 class BattleScene : public GameScene {
@@ -68,14 +74,11 @@ private:
     bool battleEnd = false;
     sf::Vector2f velocity{ 0.f,0.f };
     float speed = 200.f;
-
-    // Visuals for the Battle Scene ONLY
     sf::Texture enemyTex;
     std::optional<sf::Sprite> enemySpr;
     std::optional<sf::RectangleShape> hpBarBg, hpBarFg;
     sf::Texture shieldTex;
     std::optional<sf::Sprite> shieldIcon;
-
     void setupUI();
     void handleMenuInput(const sf::Event& ev);
     void executeAction();
@@ -86,12 +89,16 @@ private:
 class SceneManager : public sf::Drawable {
 public:
     enum class State { Map, Battle, GameOver };
+
     SceneManager();
-    void switchTo(State newState, Enemy* battleEnemy = nullptr);
+    void switchTo(State newState, Enemy* battleEnemy = nullptr, bool isVictory = false);
     void handleEvent(const sf::Event& ev);
     void update(float dt, sf::RenderWindow& window, sf::View& gameView);
     void draw(sf::RenderTarget& target, sf::View& gameView, sf::View& hudView) const;
     const Player& getPlayer() const { return player; }
+
+    static void pushNotification(const std::string& message);
+
 private:
     State currentState;
     std::unique_ptr<GameScene> currentScene;
@@ -103,9 +110,18 @@ private:
     bool battleInitiated = false;
     bool bossDefeated = false;
     mutable sf::Font hudFont;
+
+    struct Notification {
+        sf::Text text;
+        float lifetime;
+    };
+    std::deque<Notification> notifications;
+    static SceneManager* s_instance;
+
+    void addNotification(const std::string& message);
+    void updateNotifications(float dt);
+    void drawNotifications(sf::RenderTarget& target) const;
+
     void drawPlayerHUD(sf::RenderTarget& target) const;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
-
-
-

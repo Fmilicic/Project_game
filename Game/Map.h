@@ -16,7 +16,7 @@ struct Tile {
 
 class Map : public sf::Drawable {
 public:
-    // NOTE: Dimensions adjusted for a balance of size and visibility.
+    // dimensions adjusted for a balance of size and visibility
     static constexpr int width = 50;
     static constexpr int height = 40;
     static constexpr float tileSize = 30.f;

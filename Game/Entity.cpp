@@ -1,6 +1,8 @@
 #include "Entity.h"
+#include "sceneManager.h" // ADDED for notifications
 #include <iostream>
-#include <algorithm>
+#include <algorithm> // ADDED for std::max
+#include <string>    // ADDED for std::to_string
 
 Entity::Entity() {
     shape.setRadius(15.f);
@@ -11,12 +13,13 @@ Entity::Entity() {
 void Entity::takeDamage(int damage) {
     if (shields > 0) {
         --shields;
-        std::cout << "Shield blocked the hit!\n";
+        SceneManager::pushNotification("Shield blocked the hit!"); // MODIFIED
         return;
     }
+
     int finalDmg = std::max(1, damage - def);
     hp -= finalDmg;
-    std::cout << "Took " << finalDmg << " damage, hp=" << hp << "\n";
+    SceneManager::pushNotification("Took " + std::to_string(finalDmg) + " damage!"); // MODIFIED
     if (hp < 0) {
         hp = 0;
     }
@@ -31,7 +34,7 @@ void Entity::heal(int amount) {
 
 void Entity::addShields(int amount) {
     shields += amount;
-    std::cout << "Gained " << amount << " shields! Total: " << shields << "\n";
+    SceneManager::pushNotification("Gained " + std::to_string(amount) + " shields!"); // MODIFIED
 }
 
 void Entity::reset() {
@@ -58,19 +61,27 @@ Player::Player() {
     atk = 15; def = 8; shields = 1;
     shape.setFillColor(sf::Color::Green);
 }
+
 void Player::update(float) { }
 void Player::setStats(int hp_, int atk_, int def_, int shields_) {
     maxHp = hp_; hp = hp_;
     atk = atk_; def = def_; shields = shields_;
 }
+
 void Player::applyBuff(MapObject::BuffType type) {
     switch (type) {
     case MapObject::BuffType::Health:
-        maxHp += 20; heal(20); std::cout << "Max HP increased!\n"; break;
+        maxHp += 20; heal(20);
+        SceneManager::pushNotification("Max HP increased!"); // MODIFIED
+        break;
     case MapObject::BuffType::Attack:
-        atk += 3; std::cout << "Attack increased!\n"; break;
+        atk += 3;
+        SceneManager::pushNotification("Attack increased!"); // MODIFIED
+        break;
     case MapObject::BuffType::Defense:
-        def += 2; std::cout << "Defense increased!\n"; break;
+        def += 2;
+        SceneManager::pushNotification("Defense increased!"); // MODIFIED
+        break;
     }
 }
 
@@ -85,14 +96,18 @@ Enemy::Enemy(Type t) : type(t) {
         shape.setFillColor(sf::Color(139, 0, 0)); break;
     }
 }
+
 void Enemy::update(float) { }
+
 void Enemy::setType(Type t) {
     type = t;
     configureStats();
 }
+
 Enemy::Type Enemy::getType() const {
     return type;
 }
+
 void Enemy::configureStats() {
     switch (type) {
     case Type::Basic: maxHp = 30; atk = 8; def = 2; shields = 0; break;
