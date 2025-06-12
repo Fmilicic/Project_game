@@ -1,8 +1,8 @@
 #include "Entity.h"
-#include "sceneManager.h" // ADDED for notifications
+#include "sceneManager.h"
 #include <iostream>
-#include <algorithm> // ADDED for std::max
-#include <string>    // ADDED for std::to_string
+#include <algorithm>
+#include <string> 
 
 Entity::Entity() {
     shape.setRadius(15.f);
@@ -13,13 +13,13 @@ Entity::Entity() {
 void Entity::takeDamage(int damage) {
     if (shields > 0) {
         --shields;
-        SceneManager::pushNotification("Shield blocked the hit!"); // MODIFIED
+        SceneManager::pushNotification("Shield blocked the hit!"); 
         return;
     }
 
     int finalDmg = std::max(1, damage - def);
     hp -= finalDmg;
-    SceneManager::pushNotification("Took " + std::to_string(finalDmg) + " damage!"); // MODIFIED
+    SceneManager::pushNotification("Took " + std::to_string(finalDmg) + " damage!"); 
     if (hp < 0) {
         hp = 0;
     }
@@ -34,7 +34,7 @@ void Entity::heal(int amount) {
 
 void Entity::addShields(int amount) {
     shields += amount;
-    SceneManager::pushNotification("Gained " + std::to_string(amount) + " shields!"); // MODIFIED
+    SceneManager::pushNotification("Gained " + std::to_string(amount) + " shields!");
 }
 
 void Entity::reset() {
@@ -72,15 +72,15 @@ void Player::applyBuff(MapObject::BuffType type) {
     switch (type) {
     case MapObject::BuffType::Health:
         maxHp += 20; heal(20);
-        SceneManager::pushNotification("Max HP increased!"); // MODIFIED
+        SceneManager::pushNotification("Max HP increased!"); 
         break;
     case MapObject::BuffType::Attack:
         atk += 3;
-        SceneManager::pushNotification("Attack increased!"); // MODIFIED
+        SceneManager::pushNotification("Attack increased!");
         break;
     case MapObject::BuffType::Defense:
         def += 2;
-        SceneManager::pushNotification("Defense increased!"); // MODIFIED
+        SceneManager::pushNotification("Defense increased!");
         break;
     }
 }
