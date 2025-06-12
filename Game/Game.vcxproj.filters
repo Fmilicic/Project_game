@@ -39,17 +39,8 @@
     <ClCompile Include="Map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Tile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Base.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Tile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BHE.h">
       <Filter>Header Files</Filter>
     </ClInclude>
