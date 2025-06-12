@@ -103,11 +103,40 @@ void BattleScene::setupUI() {
         t.setFillColor(sf::Color::White);
         rootMenu.push_back(t);
     }
+
     skillsMenu.clear();
-    for (auto s : { "Fireball", "Heal", "Back" }) {
+    // NOTE: "Back" is replaced with "Protect"
+    for (auto s : { "Fireball", "Heal", "Protect" }) {
         sf::Text t(font, s, 30);
         t.setFillColor(sf::Color::White);
         skillsMenu.push_back(t);
+    }
+}
+
+void BattleScene::executeAction() {
+    if (currentState == State::PlayerMenu) {
+        if (rootIndex == 0) enemy.takeDamage(player.getAtk());
+        else if (rootIndex == 1) { currentState = State::SkillsMenu; return; }
+        else { battleEnd = true; currentState = State::BattleEnded; return; }
+    }
+    else { // In SkillsMenu
+        if (skillIndex == 0) { // Fireball
+            enemy.takeDamage(player.getAtk() * 2);
+        }
+        else if (skillIndex == 1) { // Heal
+            player.heal(20);
+        }
+        else if (skillIndex == 2) { // Protect
+            player.addShields(2);
+        }
+    }
+
+    if (enemy.isDead()) {
+        battleEnd = true;
+        currentState = State::BattleEnded;
+    }
+    else {
+        startEnemyAttack();
     }
 }
 void BattleScene::handleMenuInput(const sf::Event& ev) {
@@ -121,20 +150,20 @@ void BattleScene::handleMenuInput(const sf::Event& ev) {
         else if (k->scancode == sf::Keyboard::Scan::Escape && currentState == State::SkillsMenu) currentState = State::PlayerMenu;
     }
 }
-void BattleScene::executeAction() {
-    if (currentState == State::PlayerMenu) {
-        if (rootIndex == 0) enemy.takeDamage(player.getAtk());
-        else if (rootIndex == 1) { currentState = State::SkillsMenu; return; }
-        else { battleEnd = true; currentState = State::BattleEnded; return; }
-    }
-    else {
-        if (skillIndex == 0) { enemy.takeDamage(player.getAtk() * 2); }
-        else if (skillIndex == 1) player.heal(20);
-        else { currentState = State::PlayerMenu; return; }
-    }
-    if (enemy.isDead()) { battleEnd = true; currentState = State::BattleEnded; }
-    else { startEnemyAttack(); }
-}
+//void BattleScene::executeAction() {
+//    if (currentState == State::PlayerMenu) {
+//        if (rootIndex == 0) enemy.takeDamage(player.getAtk());
+//        else if (rootIndex == 1) { currentState = State::SkillsMenu; return; }
+//        else { battleEnd = true; currentState = State::BattleEnded; return; }
+//    }
+//    else {
+//        if (skillIndex == 0) { enemy.takeDamage(player.getAtk() * 2); }
+//        else if (skillIndex == 1) player.heal(20);
+//        else { currentState = State::PlayerMenu; return; }
+//    }
+//    if (enemy.isDead()) { battleEnd = true; currentState = State::BattleEnded; }
+//    else { startEnemyAttack(); }
+//}
 void BattleScene::startEnemyAttack() {
     currentState = State::EnemyAttack;
     engine.start(player, enemy);

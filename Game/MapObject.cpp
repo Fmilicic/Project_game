@@ -9,8 +9,8 @@ MapObject::MapObject(int gridX, int gridY, float tileSize, BuffType type)
     shape.setPosition(sf::Vector2f(static_cast<float>(gridX) * tileSize, static_cast<float>(gridY) * tileSize));
 
     switch (type) {
-    case BuffType::Health:  shape.setFillColor(sf::Color(200, 50, 50)); break;
-    case BuffType::Attack:  shape.setFillColor(sf::Color(50, 200, 50)); break;
+    case BuffType::Attack:  shape.setFillColor(sf::Color(200, 50, 50)); break;
+    case BuffType::Health:  shape.setFillColor(sf::Color(50, 200, 50)); break;
     case BuffType::Defense: shape.setFillColor(sf::Color(50, 50, 200)); break;
     }
 }

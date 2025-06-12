@@ -10,6 +10,7 @@ public:
     virtual void update(float dt) = 0;
     virtual void takeDamage(int damage);
     void heal(int amount);
+    void addShields(int amount);
     virtual void reset();
     bool isDead() const;
     int getHp() const;
