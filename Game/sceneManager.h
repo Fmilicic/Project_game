@@ -1,14 +1,15 @@
 #pragma once
-
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp> // Added for audio
 #include <memory>
 #include <vector>
-#include <string> 
-#include <deque>  
+#include <string>
+#include <deque>
 #include "Entity.h"
 #include "Map.h"
 #include "MapObject.h"
 #include "BHE.h"
+#include "AudioManager.h" // Added AudioManager
 
 class GameScene : public sf::Drawable {
 public:
@@ -19,7 +20,8 @@ public:
 
 class MapScene : public GameScene {
 public:
-    MapScene(Player& player, std::vector<Enemy>& enemies, Map& map, std::vector<MapObject>& objects, bool isBossDefeated);
+    // MODIFIED: Added AudioManager&
+    MapScene(Player& player, std::vector<Enemy>& enemies, Map& map, std::vector<MapObject>& objects, bool isBossDefeated, AudioManager& audio);
     void handleEvent(const sf::Event& ev) override;
     void update(float dt, const sf::RenderWindow& window) override;
     bool reachedStairs() const { return atStairs; }
@@ -34,6 +36,7 @@ private:
     bool atStairs = false;
     Enemy* battleEnemy = nullptr;
     bool bossDefeated = false;
+    AudioManager& audioManager; // MODIFIED: Added reference
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
@@ -56,7 +59,8 @@ private:
 class BattleScene : public GameScene {
 public:
     enum class State { PlayerMenu, SkillsMenu, EnemyAttack, BattleEnded };
-    BattleScene(Player& player, Enemy& enemy);
+    // MODIFIED: Added AudioManager&
+    BattleScene(Player& player, Enemy& enemy, AudioManager& audio);
     void handleEvent(const sf::Event& ev) override;
     void update(float dt, const sf::RenderWindow& window) override;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -66,6 +70,7 @@ public:
 private:
     Player& player;
     Enemy& enemy;
+    AudioManager& audioManager; // MODIFIED: Added reference
     State currentState = State::PlayerMenu;
     mutable sf::Font font;
     std::vector<sf::Text> rootMenu, skillsMenu;
@@ -96,7 +101,6 @@ public:
     void update(float dt, sf::RenderWindow& window, sf::View& gameView);
     void draw(sf::RenderTarget& target, sf::View& gameView, sf::View& hudView) const;
     const Player& getPlayer() const { return player; }
-
     static void pushNotification(const std::string& message);
 
 private:
@@ -117,6 +121,7 @@ private:
     };
     std::deque<Notification> notifications;
     static SceneManager* s_instance;
+    AudioManager audioManager; // MODIFIED: Added AudioManager instance
 
     void addNotification(const std::string& message);
     void updateNotifications(float dt);

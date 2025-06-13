@@ -7,8 +7,8 @@
 
 SceneManager* SceneManager::s_instance = nullptr;
 
-MapScene::MapScene(Player& p, std::vector<Enemy>& e, Map& m, std::vector<MapObject>& o, bool isBossDefeated)
-    : player(p), enemies(e), map(m), objects(o), bossDefeated(isBossDefeated) {}
+MapScene::MapScene(Player& p, std::vector<Enemy>& e, Map& m, std::vector<MapObject>& o, bool isBossDefeated, AudioManager& audio)
+    : player(p), enemies(e), map(m), objects(o), bossDefeated(isBossDefeated), audioManager(audio) {}
 
 void MapScene::handleEvent(const sf::Event& ev) {
     if (auto* key = ev.getIf<sf::Event::KeyPressed>()) {
@@ -30,6 +30,7 @@ void MapScene::handleEvent(const sf::Event& ev) {
         for (auto& obj : objects) {
             if (obj.getGridX() == nx && obj.getGridY() == ny) {
                 if (!obj.isUsed()) {
+                    audioManager.playSound(AudioManager::SoundID::BuffPickup);
                     player.applyBuff(obj.getBuffType());
                     obj.use();
                 }
@@ -68,7 +69,7 @@ void MapScene::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 GameOverScene::GameOverScene(Player& p, bool isVictory)
     : player(p), victory(isVictory) {
     if (!font.openFromFile("game_over.ttf")) {
-        throw std::runtime_error("FATAL ERROR: Could not load font 'game_over.ttf' in GameOverScene. Check working directory and file path.");
+        throw std::runtime_error("FATAL ERROR: Could not load font 'game_over.ttf' in GameOverScene.");
     }
 }
 
@@ -95,12 +96,11 @@ void GameOverScene::draw(sf::RenderTarget& t, sf::RenderStates) const {
     t.draw(text);
 }
 
-BattleScene::BattleScene(Player& p, Enemy& e)
-    : player(p), enemy(e) {
+BattleScene::BattleScene(Player& p, Enemy& e, AudioManager& audio)
+    : player(p), enemy(e), audioManager(audio) {
     if (!font.openFromFile("game_over.ttf")) {
-        throw std::runtime_error("FATAL ERROR: Could not load font 'game_over.ttf' in BattleScene. Check working directory and file path.");
+        throw std::runtime_error("FATAL ERROR: Could not load font 'game_over.ttf' in BattleScene.");
     }
-
     std::string texturePath;
     switch (enemy.getType()) {
     case Enemy::Type::Ghost: texturePath = "Assets/ghost_enemy.png"; break;
@@ -207,6 +207,10 @@ void BattleScene::handleEvent(const sf::Event& ev) {
 }
 
 void BattleScene::update(float dt, const sf::RenderWindow& win) {
+    if (enemy.getType() == Enemy::Type::Boss) {
+        audioManager.updateBossMusic(enemy);
+    }
+
     if (currentState == State::EnemyAttack) {
         sf::Vector2f pos = player.getPosition();
         pos += velocity * dt;
@@ -339,6 +343,9 @@ SceneManager::SceneManager() : currentState(State::Map), player(), enemies(), ma
     }
 
     if (!hudFont.openFromFile("game_over.ttf")) { throw std::runtime_error("FATAL ERROR: Could not load HUD font 'game_over.ttf'."); }
+
+    // start 1st track
+    audioManager.playMusic(AudioManager::MusicID::Exploration);
     switchTo(State::Map);
 }
 
@@ -350,7 +357,7 @@ void SceneManager::addNotification(const std::string& message) {
 
     sf::Text text(hudFont, message, 48);
     text.setFillColor(sf::Color::White);
-    notifications.push_back({ text, 3.0f });
+    notifications.push_front({ text, 3.0f });
 
     if (notifications.size() > 5) {
         notifications.pop_back();
@@ -379,7 +386,7 @@ void SceneManager::updateNotifications(float dt) {
 }
 
 void SceneManager::drawNotifications(sf::RenderTarget& target) const {
-    float y_pos = 20.f;
+    float y_pos = 70.f;
     const float margin = 15.f;
     const float window_width = static_cast<float>(target.getSize().x);
 
@@ -397,22 +404,41 @@ void SceneManager::drawNotifications(sf::RenderTarget& target) const {
         text.setPosition({ x_pos, y_pos });
 
         target.draw(text);
-        y_pos += text.getGlobalBounds().size.y + 10.f;
+        y_pos += text.getGlobalBounds().size.y + 25.f;
     }
 }
 
 void SceneManager::switchTo(State ns, Enemy* be, bool isVictory) {
     currentState = ns;
     if (ns == State::Map) {
-        currentScene = std::make_unique<MapScene>(player, enemies, map, mapObjects, bossDefeated);
+        currentScene = std::make_unique<MapScene>(player, enemies, map, mapObjects, bossDefeated, audioManager);
+        audioManager.playMusic(AudioManager::MusicID::Exploration);
     }
     else if (ns == State::Battle && be) {
         preBattlePos = player.getPosition();
         battleInitiated = true;
-        currentScene = std::make_unique<BattleScene>(player, *be);
+        currentScene = std::make_unique<BattleScene>(player, *be, audioManager);
+
+        switch (be->getType()) {
+        case Enemy::Type::Basic:
+            audioManager.playMusic(AudioManager::MusicID::Battle_Basic);
+            break;
+        case Enemy::Type::Ghost:
+            audioManager.playMusic(AudioManager::MusicID::Battle_Ghost);
+            break;
+        case Enemy::Type::Boss:
+            audioManager.updateBossMusic(*be);
+            break;
+        }
     }
     else if (ns == State::GameOver) {
         currentScene = std::make_unique<GameOverScene>(player, isVictory);
+        if (isVictory) {
+            audioManager.playMusic(AudioManager::MusicID::GameOver_Victory, true);
+        }
+        else {
+            audioManager.playMusic(AudioManager::MusicID::GameOver_Defeat, true);
+        }
     }
 }
 
