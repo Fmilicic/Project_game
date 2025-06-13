@@ -9,7 +9,7 @@
 #include "Map.h"
 #include "MapObject.h"
 #include "BHE.h"
-#include "AudioManager.h" // Added AudioManager
+#include "AudioManager.h"
 
 class GameScene : public sf::Drawable {
 public:
@@ -20,7 +20,6 @@ public:
 
 class MapScene : public GameScene {
 public:
-    // MODIFIED: Added AudioManager&
     MapScene(Player& player, std::vector<Enemy>& enemies, Map& map, std::vector<MapObject>& objects, bool isBossDefeated, AudioManager& audio);
     void handleEvent(const sf::Event& ev) override;
     void update(float dt, const sf::RenderWindow& window) override;
@@ -36,7 +35,7 @@ private:
     bool atStairs = false;
     Enemy* battleEnemy = nullptr;
     bool bossDefeated = false;
-    AudioManager& audioManager; // MODIFIED: Added reference
+    AudioManager& audioManager;
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
@@ -59,7 +58,6 @@ private:
 class BattleScene : public GameScene {
 public:
     enum class State { PlayerMenu, SkillsMenu, EnemyAttack, BattleEnded };
-    // MODIFIED: Added AudioManager&
     BattleScene(Player& player, Enemy& enemy, AudioManager& audio);
     void handleEvent(const sf::Event& ev) override;
     void update(float dt, const sf::RenderWindow& window) override;
@@ -70,7 +68,7 @@ public:
 private:
     Player& player;
     Enemy& enemy;
-    AudioManager& audioManager; // MODIFIED: Added reference
+    AudioManager& audioManager;
     State currentState = State::PlayerMenu;
     mutable sf::Font font;
     std::vector<sf::Text> rootMenu, skillsMenu;
@@ -121,7 +119,7 @@ private:
     };
     std::deque<Notification> notifications;
     static SceneManager* s_instance;
-    AudioManager audioManager; // MODIFIED: Added AudioManager instance
+    AudioManager audioManager;
 
     void addNotification(const std::string& message);
     void updateNotifications(float dt);

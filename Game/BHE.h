@@ -21,7 +21,6 @@ private:
 
 class BulletHellEngine : public sf::Drawable {
 public:
-    // Pattern is now public to be accessible for setup
     struct Pattern {
         float duration;
         float spawnInterval;

@@ -1,9 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include "sceneManager.h"
 #include <ctime>
-#include <algorithm> // For std::clamp
+#include <algorithm>
 
-// This function remains unchanged. It correctly handles the game view's aspect ratio.
 void handleResize(sf::RenderWindow& window, sf::View& view) {
     const sf::Vector2f originalSize(800.f, 600.f);
     float aspectRatio = originalSize.x / originalSize.y;
@@ -16,11 +15,11 @@ void handleResize(sf::RenderWindow& window, sf::View& view) {
     float viewportX = 0.f;
     float viewportY = 0.f;
 
-    if (newAspectRatio > aspectRatio) { // Window is wider than the aspect ratio (letterbox)
+    if (newAspectRatio > aspectRatio) { 
         viewportWidth = aspectRatio / newAspectRatio;
         viewportX = (1.f - viewportWidth) / 2.f;
     }
-    else { // Window is taller than the aspect ratio (pillarbox)
+    else { 
         viewportHeight = newAspectRatio / aspectRatio;
         viewportY = (1.f - viewportHeight) / 2.f;
     }
@@ -35,7 +34,7 @@ int main() {
     sf::View gameView(sf::FloatRect(sf::Vector2f{ 0, 0 }, sf::Vector2f{ 800, 600 }));
     sf::View hudView(sf::FloatRect(sf::Vector2f{ 0, 0 }, sf::Vector2f{ 800, 600 }));
 
-    handleResize(window, gameView); // Initial setup for the viewport
+    handleResize(window, gameView);
 
     SceneManager sceneManager;
     srand(time(nullptr));
@@ -46,19 +45,15 @@ int main() {
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-            // --- MODIFIED RESIZE LOGIC ---
             if (const auto* resized = event->getIf<sf::Event::Resized>()) {
-                // 1. Update the game view to maintain the aspect ratio (letterboxing)
+                // Update the game view to maintain the aspect ratio (letterboxing)
                 handleResize(window, gameView);
 
-                // 2. Update the HUD view to match the new window size exactly
-                //    This prevents the HUD from stretching.
+                //  Update the HUD view to match the new window size exactly
                 sf::Vector2f newSize(static_cast<float>(resized->size.x), static_cast<float>(resized->size.y));
                 hudView.setSize(newSize);
                 hudView.setCenter(newSize / 2.f);
             }
-            // --- END OF MODIFICATION ---
-
             sceneManager.handleEvent(*event);
         }
 
