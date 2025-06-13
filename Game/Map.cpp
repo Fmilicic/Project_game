@@ -5,20 +5,18 @@
 #include <algorithm>
 #include <queue>
 
-// Unchanged from original file
+
 Tile::Tile(int x, int y, float tileSize, bool isPassable, bool isStairsFlag)
     : x(x), y(y), passable(isPassable), isStairs(isStairsFlag) {
     shape.setSize({ tileSize, tileSize });
     shape.setPosition(sf::Vector2f(static_cast<float>(x) * tileSize, static_cast<float>(y) * tileSize));
 }
 
-// Unchanged from original file
 Map::Map() {
     tiles.reserve(width * height);
     regenerate();
 }
 
-// Replaces the old, buggy global countAliveNeighbours function
 int Map::countWallNeighbors(int x, int y) {
     int count = 0;
     for (int ny = y - 1; ny <= y + 1; ++ny) {
@@ -138,8 +136,6 @@ void Map::removeSmallRegions() {
     }
 }
 
-
-// The new map generation function
 void Map::regenerate() {
     generateMazeSkeleton();
     applyCellularAutomata(4);
@@ -157,8 +153,6 @@ void Map::regenerate() {
         }
     }
 }
-
-// --- All other functions from the original file remain unchanged ---
 
 std::vector<sf::Vector2i> Map::findLargestConnectedArea() {
     std::vector<bool> visited(width * height, false);
