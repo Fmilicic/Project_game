@@ -462,7 +462,7 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionSwipesPattern() {
             self.spawnAction = [this, swipes_fired, swipe_timer](Player& player) mutable {
                 const int num_swipes = 3;
                 const float time_between_swipes = 2.0f;
-                const float silhouette_lifetime = 0.1f;
+                const float silhouette_lifetime = 0.15f;
                 const float swipe_bullet_speed = 320.f;
                 const float scatter_degrees = 15.f;
 
@@ -472,21 +472,30 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionSwipesPattern() {
                 const float lion_area_height = lion_area_width * 1.3f;
                 const float lion_area_offset_y = (screen_height - lion_area_height) / 2.f;
 
-                const std::vector<sf::Vector2f> lion_art_points = {
-                    {0.90f, 0.15f}, {0.85f, 0.12f}, {0.80f, 0.10f}, {0.75f, 0.08f}, {0.68f, 0.06f}, {0.60f, 0.05f},
-                    {0.50f, 0.06f}, {0.40f, 0.08f}, {0.30f, 0.12f}, {0.22f, 0.20f}, {0.15f, 0.30f},
-                    {0.10f, 0.40f}, {0.08f, 0.50f}, {0.10f, 0.60f}, {0.15f, 0.70f}, {0.22f, 0.80f}, {0.30f, 0.88f},
-                    {0.40f, 0.94f}, {0.50f, 0.98f}, {0.60f, 1.0f},
-                    {0.70f, 0.96f}, {0.78f, 0.90f}, {0.85f, 0.82f}, {0.90f, 0.75f},
-                    {0.85f, 0.68f}, {0.90f, 0.65f},
-                    {0.98f, 0.63f}, {1.00f, 0.58f}, {0.97f, 0.53f}, {0.92f, 0.50f},
-                    {0.85f, 0.45f}, {0.78f, 0.42f}, {0.72f, 0.45f}, {0.78f, 0.50f},
-                    {0.70f, 0.25f}, {0.60f, 0.20f}, {0.50f, 0.18f}, {0.40f, 0.22f}, {0.30f, 0.35f},
-                    {0.25f, 0.50f}, {0.30f, 0.65f}, {0.40f, 0.78f}, {0.55f, 0.85f}, {0.70f, 0.80f},
-                    {0.80f, 0.35f}, {0.70f, 0.55f}, {0.55f, 0.35f}, {0.45f, 0.55f}, {0.65f, 0.65f}
+                const std::vector<sf::Vector2f> lion_shape_filled = {
+                    // mane
+                    {0.95f, 0.10f}, {1.00f, 0.20f}, {1.00f, 0.30f}, {0.98f, 0.40f}, {0.95f, 0.50f},
+                    {0.98f, 0.60f}, {1.00f, 0.70f}, {0.95f, 0.80f}, {0.85f, 0.90f}, {0.75f, 0.95f},
+                    {0.90f, 0.25f}, {0.92f, 0.45f}, {0.90f, 0.65f}, {0.85f, 0.80f}, {0.78f, 0.88f},
+                    // face
+                    {0.85f, 0.05f}, {0.75f, 0.02f}, {0.65f, 0.01f}, {0.55f, 0.02f}, {0.70f, 0.10f},
+                    {0.60f, 0.08f}, {0.50f, 0.12f},
+                    // nose, muzzle
+                    {0.45f, 0.05f}, {0.30f, 0.10f}, {0.15f, 0.18f}, {0.05f, 0.25f}, {0.00f, 0.30f},
+                    {0.25f, 0.15f}, {0.10f, 0.22f}, {0.03f, 0.28f},
+                    // mouth line
+                    {0.08f, 0.35f}, {0.20f, 0.38f}, {0.35f, 0.40f}, {0.50f, 0.42f}, {0.45f, 0.41f},
+                    // jaw, chin
+                    {0.02f, 0.40f}, {0.10f, 0.45f}, {0.25f, 0.50f}, {0.40f, 0.55f}, {0.55f, 0.65f},
+                    {0.65f, 0.75f}, {0.70f, 0.85f}, {0.30f, 0.48f}, {0.45f, 0.60f}, {0.60f, 0.70f},
+                    // details
+                    {0.50f, 0.20f}, {0.55f, 0.22f}, {0.45f, 0.28f}, {0.60f, 0.30f},
+                    // filler
+                    {0.80f, 0.20f}, {0.75f, 0.35f}, {0.70f, 0.50f}, {0.75f, 0.65f}, {0.80f, 0.75f},
+                    {0.85f, 0.30f}, {0.82f, 0.55f}, {0.88f, 0.70f}
                 };
 
-                for (const auto& p : lion_art_points) {
+                for (const auto& p : lion_shape_filled) {
                     sf::Vector2f spawn_pos(lion_area_offset_x + p.x * lion_area_width, lion_area_offset_y + p.y * lion_area_height);
                     bullets.push_back(std::make_unique<Bullet>(spawn_pos, sf::Vector2f{0.f, 0.f}, 3.5f, silhouette_lifetime));
                 }
@@ -498,17 +507,16 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionSwipesPattern() {
                     static std::mt19937 gen{ std::random_device{}() };
                     const sf::Vector2f target_pos = player.getPosition();
 
-                    for (const auto& p : lion_art_points) {
+                    for (const auto& p : lion_shape_filled) {
                         sf::Vector2f spawn_pos(lion_area_offset_x + p.x * lion_area_width, lion_area_offset_y + p.y * lion_area_height);
                         sf::Vector2f direction = target_pos - spawn_pos;
                         float base_angle_rad = std::atan2(direction.y, direction.x);
 
-                        for (int i = 0; i < 2; ++i) {
-                            std::uniform_real_distribution<float> scatter(-scatter_degrees, scatter_degrees);
-                            float final_angle = base_angle_rad + (scatter(gen) * 3.14159f / 180.f);
-                            sf::Vector2f velocity(std::cos(final_angle) * swipe_bullet_speed, std::sin(final_angle) * swipe_bullet_speed);
-                            bullets.push_back(std::make_unique<Bullet>(spawn_pos, velocity, 7.f));
-                        }
+                        // Only fire one bullet per point to avoid overwhelming the player
+                        std::uniform_real_distribution<float> scatter(-scatter_degrees, scatter_degrees);
+                        float final_angle = base_angle_rad + (scatter(gen) * 3.14159f / 180.f);
+                        sf::Vector2f velocity(std::cos(final_angle) * swipe_bullet_speed, std::sin(final_angle) * swipe_bullet_speed);
+                        bullets.push_back(std::make_unique<Bullet>(spawn_pos, velocity, 7.f));
                     }
                 }
             };
@@ -523,8 +531,10 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionRoarPattern() {
             float roar_timer = 0.f;
 
             self.spawnAction = [this, roar_timer](Player&) mutable {
-                const float time_between_roar_lines = 0.25f;
+                const float time_between_roars = 1.5f;
                 const float roar_bullet_speed = 450.f;
+                const int num_bullets_in_roar_fan = 12;
+                const float roar_fan_spread_degrees = 40.f;
 
                 const float screen_width = 800.f, screen_height = 600.f;
                 const float lion_area_width = screen_width * 0.25f;
@@ -532,38 +542,51 @@ BulletHellEngine::Pattern BulletHellEngine::makeLionRoarPattern() {
                 const float lion_area_height = lion_area_width * 1.3f;
                 const float lion_area_offset_y = (screen_height - lion_area_height) / 2.f;
 
-                const std::vector<sf::Vector2f> lion_art_open = {
-                    {0.90f, 0.15f}, {0.85f, 0.12f}, {0.80f, 0.10f}, {0.75f, 0.08f}, {0.68f, 0.06f}, {0.60f, 0.05f},
-                    {0.50f, 0.06f}, {0.40f, 0.08f}, {0.30f, 0.12f}, {0.22f, 0.20f}, {0.15f, 0.30f},
-                    {0.10f, 0.40f}, {0.08f, 0.50f},
-                    {0.98f, 0.63f}, {1.00f, 0.58f}, {0.97f, 0.53f}, {0.92f, 0.50f},
-                    {0.85f, 0.45f}, {0.78f, 0.42f}, {0.72f, 0.45f}, {0.78f, 0.50f},
-                    {0.70f, 0.25f}, {0.60f, 0.20f}, {0.50f, 0.18f}, {0.40f, 0.22f}, {0.30f, 0.35f},
-                    {0.80f, 0.35f},
-                    {0.60f, 1.0f}, {0.70f, 0.96f}
+                const std::vector<sf::Vector2f> lion_shape_roaring = {
+                    // mane, head
+                    {0.95f, 0.10f}, {1.00f, 0.20f}, {1.00f, 0.30f}, {0.98f, 0.40f}, {0.95f, 0.50f},
+                    {0.98f, 0.60f}, {1.00f, 0.70f}, {0.95f, 0.80f}, {0.85f, 0.90f}, {0.75f, 0.95f},
+                    {0.90f, 0.25f}, {0.92f, 0.45f}, {0.85f, 0.05f}, {0.75f, 0.02f}, {0.65f, 0.01f},
+                    {0.55f, 0.02f}, {0.70f, 0.10f}, {0.60f, 0.08f}, {0.50f, 0.12f},
+                    // upper m
+                    {0.45f, 0.05f}, {0.30f, 0.10f}, {0.15f, 0.18f}, {0.05f, 0.25f}, {0.00f, 0.30f},
+                    // mouth line-
+                    {0.08f, 0.35f}, {0.20f, 0.38f}, {0.35f, 0.40f}, {0.38f, 0.45f},
+                    // l jaw
+                    {0.05f, 0.60f}, {0.15f, 0.75f}, {0.25f, 0.85f}, {0.40f, 0.95f}, {0.55f, 1.00f},
+                    {0.68f, 0.98f}, {0.75f, 0.90f},
+                    // inner mouth
+                    {0.20f, 0.55f}, {0.30f, 0.65f}, {0.40f, 0.75f}, {0.50f, 0.85f},
+                    {0.25f, 0.75f},
+                    // eye
+                    {0.50f, 0.20f}, {0.55f, 0.22f}
                 };
 
-                for (const auto& p : lion_art_open) {
+                for (const auto& p : lion_shape_roaring) {
                     sf::Vector2f spawn_pos(lion_area_offset_x + p.x * lion_area_width, lion_area_offset_y + p.y * lion_area_height);
                     bullets.push_back(std::make_unique<Bullet>(spawn_pos, sf::Vector2f{0.f, 0.f}, 3.5f, 0.1f));
                 }
 
                 roar_timer += 0.05f;
-                if (roar_timer >= time_between_roar_lines) {
+                if (roar_timer >= time_between_roars) {
                     roar_timer = 0.f;
 
-                    float roar_start_y = lion_area_offset_y + (0.7f * lion_area_height);
-                    float roar_start_x = lion_area_offset_x + (0.8f * lion_area_width);
-                    for (int i = 0; i < 6; ++i) {
-                        float y_pos = roar_start_y + i * 12.f;
-                        bullets.push_back(std::make_unique<Bullet>(
-                            sf::Vector2f(roar_start_x, y_pos),
-                            sf::Vector2f(-roar_bullet_speed, 0.f), 9.f
-                        ));
+                    static std::mt19937 gen{ std::random_device{}() };
+                    sf::Vector2f roar_origin(lion_area_offset_x + 0.4f * lion_area_width, lion_area_offset_y + 0.6f * lion_area_height);
+
+                    float base_angle_rad = -3.14159f;
+                    float spread_rad = roar_fan_spread_degrees * 3.14159f / 180.f;
+
+                    for (int i = 0; i < num_bullets_in_roar_fan; ++i) {
+                        float angle_offset = -spread_rad / 2.f + (spread_rad * i / (num_bullets_in_roar_fan - 1));
+                        float final_angle = base_angle_rad + angle_offset;
+                        sf::Vector2f velocity(std::cos(final_angle) * roar_bullet_speed, std::sin(final_angle) * roar_bullet_speed);
+                        bullets.push_back(std::make_unique<Bullet>(roar_origin, velocity, 9.f));
                     }
                 }
             };
         }
     };
 }
+
 
