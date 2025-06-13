@@ -1,12 +1,10 @@
 #include "MapObject.h"
 
-// Constructor implementation now matches the header.
 MapObject::MapObject(int gridX, int gridY, float tileSize, BuffType type)
     : gridX(gridX), gridY(gridY), type(type)
 {
     shape.setSize({ tileSize, tileSize });
-    // Position is set safely with constructor arguments.
-    shape.setPosition(sf::Vector2f(static_cast<float>(gridX) * tileSize, static_cast<float>(gridY) * tileSize));
+    shape.setPosition(sf::Vector2f(float(gridX) * tileSize, float(gridY) * tileSize));
 
     switch (type) {
     case BuffType::Attack:  shape.setFillColor(sf::Color(200, 50, 50)); break;

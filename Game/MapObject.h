@@ -5,7 +5,6 @@ class MapObject : public sf::Drawable {
 public:
     enum class BuffType { Health, Attack, Defense };
 
-    // Constructor now takes the position for single-step initialization.
     MapObject(int gridX, int gridY, float tileSize, BuffType type);
 
     int getGridX() const { return gridX; }
