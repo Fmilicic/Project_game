@@ -125,14 +125,14 @@ BattleScene::BattleScene(Player& p, Enemy& e, AudioManager& audio)
 void BattleScene::setupUI() {
     rootMenu.clear();
     for (auto s : { "Attack", "Skills", "Flee" }) {
-        sf::Text t(font, s, 30);
+        sf::Text t(font, s, 68);
         t.setFillColor(sf::Color::White);
         rootMenu.push_back(t);
     }
 
     skillsMenu.clear();
     for (auto s : { "Fireball", "Heal", "Protect" }) {
-        sf::Text t(font, s, 30);
+        sf::Text t(font, s, 68);
         t.setFillColor(sf::Color::White);
         skillsMenu.push_back(t);
     }
@@ -281,7 +281,12 @@ void BattleScene::drawPlayerUI(sf::RenderTarget& t) const {
 }
 
 void BattleScene::draw(sf::RenderTarget& t, sf::RenderStates states) const {
-    t.clear(sf::Color::Black);
+    sf::Vector2f targetSize(static_cast<float>(t.getSize().x), static_cast<float>(t.getSize().y));
+
+    sf::View battleView(sf::FloatRect({ 0.f, 0.f }, { targetSize.x, targetSize.y }));
+
+    t.setView(battleView);
+
     if (currentState == State::PlayerMenu || currentState == State::SkillsMenu) {
         if (enemySpr) t.draw(*enemySpr, states);
         if (hpBarBg) t.draw(*hpBarBg, states);

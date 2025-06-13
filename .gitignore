@@ -1,5 +1,4 @@
-x64/Debug/.exe
-x64/Debug/.pdb
+x64
 .vs
 ./.vs
 /x64

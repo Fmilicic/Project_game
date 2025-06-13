@@ -3,7 +3,7 @@
 #include <ctime>
 #include <algorithm> // For std::clamp
 
-// Function to handle window resizing while maintaining aspect ratio
+// This function remains unchanged. It correctly handles the game view's aspect ratio.
 void handleResize(sf::RenderWindow& window, sf::View& view) {
     const sf::Vector2f originalSize(800.f, 600.f);
     float aspectRatio = originalSize.x / originalSize.y;
@@ -32,9 +32,7 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(sf::Vector2u{ 800, 600 }), "RPG Bullet Hell", sf::Style::Default);
     window.setVerticalSyncEnabled(true);
 
-    // Main camera for the game world. Its size is fixed to the logical resolution.
     sf::View gameView(sf::FloatRect(sf::Vector2f{ 0, 0 }, sf::Vector2f{ 800, 600 }));
-    // A separate, static view for the HUD, which never moves.
     sf::View hudView(sf::FloatRect(sf::Vector2f{ 0, 0 }, sf::Vector2f{ 800, 600 }));
 
     handleResize(window, gameView); // Initial setup for the viewport
@@ -48,10 +46,18 @@ int main() {
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-            // Handle window resizing to maintain aspect ratio
-            if (event->is<sf::Event::Resized>()) {
+            // --- MODIFIED RESIZE LOGIC ---
+            if (const auto* resized = event->getIf<sf::Event::Resized>()) {
+                // 1. Update the game view to maintain the aspect ratio (letterboxing)
                 handleResize(window, gameView);
+
+                // 2. Update the HUD view to match the new window size exactly
+                //    This prevents the HUD from stretching.
+                sf::Vector2f newSize(static_cast<float>(resized->size.x), static_cast<float>(resized->size.y));
+                hudView.setSize(newSize);
+                hudView.setCenter(newSize / 2.f);
             }
+            // --- END OF MODIFICATION ---
 
             sceneManager.handleEvent(*event);
         }
@@ -61,7 +67,6 @@ int main() {
 
         window.clear(sf::Color::Black);
 
-        // SceneManager now handles setting the correct view before drawing
         sceneManager.draw(window, gameView, hudView);
 
         window.display();
